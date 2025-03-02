@@ -199,9 +199,9 @@ body {
 }
 
 .table td.presenter-cell {
-    min-width: 100px;
-    width: 120px;
-    max-width: 130px;
+    min-width: 80px;
+    width: 100px;
+    max-width: 110px;
     white-space: nowrap;
     font-weight: 500;
     padding-left: 15px;
@@ -211,6 +211,28 @@ body {
     text-align: left;
     padding-left: 15px;
     font-weight: 500;
+}
+
+/* 操作按钮样式 */
+.table td.action-cell {
+    white-space: nowrap;
+    padding: 0.5rem 0.5rem;
+}
+
+.table td.action-cell .btn-sm {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+    line-height: 1.2;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* 针对小屏幕的操作按钮调整 */
+@media (max-width: 768px) {
+    .table td.action-cell .btn-sm {
+        font-size: 0.65rem;
+        padding: 0.1rem 0.3rem;
+    }
 }
 
 /* 针对过期行样式调整 */
