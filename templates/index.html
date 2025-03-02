@@ -12,10 +12,17 @@
         {% if papers %}
         <div class="table-responsive">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <button id="toggle-expired" class="btn btn-sm btn-outline-secondary">
-                    <span id="toggle-expired-text">显示已过期安排</span>
-                    <span class="badge bg-secondary ms-1" id="expired-count">0</span>
-                </button>
+                <div>
+                    <button id="toggle-expired" class="btn btn-sm btn-outline-secondary">
+                        <span id="toggle-expired-text">显示已过期安排</span>
+                        <span class="badge bg-secondary ms-1" id="expired-count">0</span>
+                    </button>
+                    
+                    <div class="btn-group ms-2">
+                        <a href="/papers/shift/forward" class="btn btn-sm btn-outline-primary" onclick="return confirm('确定要将所有未过期安排顺延一周吗？')">顺延一周</a>
+                        <a href="/papers/shift/backward" class="btn btn-sm btn-outline-primary" onclick="return confirm('确定要将所有未过期安排提前一周吗？')">提前一周</a>
+                    </div>
+                </div>
                 <div class="legend">
                     <span class="badge bg-success me-2">近期安排</span>
                     <span class="badge bg-light text-dark border me-2">未来安排</span>

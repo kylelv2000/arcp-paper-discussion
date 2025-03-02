@@ -122,6 +122,32 @@ def delete_paper(id):
     flash('论文安排已删除', 'success')
     return redirect(url_for('index'))
 
+@app.route('/papers/shift/<direction>')
+def shift_papers(direction):
+    today = datetime.now().date()
+    # 获取所有未过期的论文安排
+    future_papers = Paper.query.filter(Paper.date >= today).all()
+    
+    if not future_papers:
+        flash('没有找到未来的论文安排', 'warning')
+        return redirect(url_for('index'))
+    
+    # 根据方向决定是顺延还是提前
+    days = 7 if direction == 'forward' else -7
+    
+    # 修改日期
+    for paper in future_papers:
+        paper.date = paper.date + timedelta(days=days)
+    
+    db.session.commit()
+    
+    if direction == 'forward':
+        flash(f'已将{len(future_papers)}个未过期安排顺延一周', 'success')
+    else:
+        flash(f'已将{len(future_papers)}个未过期安排提前一周', 'success')
+    
+    return redirect(url_for('index'))
+
 # 管理员路由
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
