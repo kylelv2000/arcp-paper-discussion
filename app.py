@@ -284,6 +284,11 @@ def send_notification_now():
     for paper in future_papers:
         body += f"\n{paper.date.strftime('%Y/%m/%d')} - {paper.presenter} - {paper.title}"
     
+    body += """
+
+    请访问我们的网站 https://arcp.kylelv.com/ 查看和编辑具体安排。
+    """
+    
     try:
         msg = Message(subject=subject, recipients=recipients, body=body)
         mail.send(msg)
@@ -334,6 +339,11 @@ def send_notification():
             for paper in future_papers:
                 body += f"\n{paper.date.strftime('%Y/%m/%d')} - {paper.presenter} - {paper.title}"
                 
+            body += """
+
+            请访问我们的网站 https://arcp.kylelv.com/ 查看和编辑具体安排。
+            """
+            
             msg = Message(subject=subject, recipients=recipients, body=body)
             mail.send(msg)
 
