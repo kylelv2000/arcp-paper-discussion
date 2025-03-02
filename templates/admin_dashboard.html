@@ -4,6 +4,36 @@
 
 {% block content %}
 <div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h2>修改管理员密码</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('change_admin_password_web') }}" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="current_password" class="form-label">当前密码</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="new_password" class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+                        <div class="form-text">密码长度必须至少为8个字符</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="confirm_password" class="form-label">确认新密码</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">修改密码</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
     <div class="col-lg-6 mb-4">
         <div class="card h-100">
             <div class="card-header">

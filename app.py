@@ -14,7 +14,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret_key')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data/paper_schedule.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////app/data/paper_schedule.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 邮件配置
@@ -150,7 +150,40 @@ def admin_login():
 @login_required
 def admin_logout():
     logout_user()
+    flash('已退出登录', 'success')
     return redirect(url_for('index'))
+
+@app.route('/admin/change_password', methods=['POST'])
+@login_required
+def change_admin_password_web():
+    if not current_user.is_admin:
+        flash('无权限修改密码', 'danger')
+        return redirect(url_for('index'))
+        
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+    
+    # 验证当前密码
+    if not current_user.check_password(current_password):
+        flash('当前密码不正确', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    
+    # 验证新密码长度
+    if len(new_password) < 8:
+        flash('新密码长度必须至少为8个字符', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    
+    # 验证两次输入的新密码是否一致
+    if new_password != confirm_password:
+        flash('两次输入的新密码不一致', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    
+    # 修改密码
+    current_user.set_password(new_password)
+    db.session.commit()
+    flash('密码已成功修改', 'success')
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin')
 @login_required
