@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{% if paper %}编辑{% else %}添加{% endif %}论文讲解安排 - ARCP论文讨论班{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>{% if paper %}编辑{% else %}添加{% endif %}论文讲解安排</h2>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div class="mb-3">
+                <label for="date" class="form-label">时间</label>
+                <input type="text" class="form-control" id="date" name="date" placeholder="格式: YYYY/MM/DD" value="{{ paper.date.strftime('%Y/%m/%d') if paper else '' }}" required>
+                <div class="form-text">请按照格式YYYY/MM/DD输入，例如: 2024/09/09</div>
+            </div>
+            <div class="mb-3">
+                <label for="presenter" class="form-label">讲解人</label>
+                <input type="text" class="form-control" id="presenter" name="presenter" value="{{ paper.presenter if paper else '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="title" class="form-label">论文名称</label>
+                <input type="text" class="form-control" id="title" name="title" value="{{ paper.title if paper else '' }}" required>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">返回</a>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 这里可以添加日期选择器等增强功能
+});
+</script>
+{% endblock %} 

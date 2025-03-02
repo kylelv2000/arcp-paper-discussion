@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - ARCP论文讨论班{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2>论文讲解安排表</h2>
+        <a href="{{ url_for('add_paper') }}" class="btn btn-primary">添加安排</a>
+    </div>
+    <div class="card-body">
+        {% if papers %}
+        <div class="table-responsive">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <button id="toggle-expired" class="btn btn-sm btn-outline-secondary">
+                    <span id="toggle-expired-text">显示已过期安排</span>
+                    <span class="badge bg-secondary ms-1" id="expired-count">0</span>
+                </button>
+                <div class="legend">
+                    <span class="badge bg-success me-2">近期安排</span>
+                    <span class="badge bg-light text-dark border me-2">未来安排</span>
+                    <span class="badge bg-secondary">已过期</span>
+                </div>
+            </div>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>讲解人</th>
+                        <th>论文名称</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for paper in papers %}
+                    {% set is_expired = paper.date < today %}
+                    {% set is_upcoming = paper.date >= today and (paper.date - today).days <= 7 %}
+                    <tr class="{% if is_expired %}expired-row{% elif is_upcoming %}upcoming-row{% endif %}" data-expired="{{ 'true' if is_expired else 'false' }}">
+                        <td>{{ paper.date.strftime('%Y/%m/%d') }}</td>
+                        <td>{{ paper.presenter }}</td>
+                        <td>{{ paper.title }}</td>
+                        <td>
+                            {% if is_expired %}
+                                <span class="badge bg-secondary">已过期</span>
+                            {% elif is_upcoming %}
+                                <span class="badge bg-success">近期</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark border">未来</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('edit_paper', id=paper.id) }}" class="btn btn-sm btn-outline-primary">编辑</a>
+                                <a href="{{ url_for('delete_paper', id=paper.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定要删除这条记录吗？')">删除</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            目前没有论文讲解安排，点击"添加安排"按钮添加。
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化过期行数和折叠状态
+    const expiredRows = document.querySelectorAll('tr[data-expired="true"]');
+    const expiredCount = document.getElementById('expired-count');
+    const toggleBtn = document.getElementById('toggle-expired');
+    const toggleText = document.getElementById('toggle-expired-text');
+    
+    // 设置过期行数
+    expiredCount.textContent = expiredRows.length;
+    
+    // 默认隐藏过期行
+    let showExpired = false;
+    updateExpiredRowsVisibility();
+    
+    // 添加点击事件
+    toggleBtn.addEventListener('click', function() {
+        showExpired = !showExpired;
+        updateExpiredRowsVisibility();
+    });
+    
+    function updateExpiredRowsVisibility() {
+        expiredRows.forEach(row => {
+            row.style.display = showExpired ? 'table-row' : 'none';
+        });
+        
+        toggleText.textContent = showExpired ? '隐藏已过期安排' : '显示已过期安排';
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,135 @@
+/* 全局样式 */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
+}
+
+.container {
+    flex: 1;
+}
+
+/* 导航栏样式 */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 卡片样式 */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-radius: 0.5rem;
+    border: none;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    padding: 1rem 1.25rem;
+    border-top-left-radius: 0.5rem !important;
+    border-top-right-radius: 0.5rem !important;
+}
+
+.card-header h2 {
+    margin-bottom: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* 表格样式 */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    font-weight: 600;
+    border-top: none;
+}
+
+/* 表单样式 */
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 0.35rem;
+    padding: 0.375rem 1rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        align-items: start !important;
+    }
+    
+    .card-header .btn {
+        margin-top: 1rem;
+        width: 100%;
+    }
+}
+
+/* 自定义动画 */
+.alert {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 过期论文样式 */
+.expired-row {
+    color: #999;
+    background-color: #f8f8f8 !important;
+}
+
+.expired-row:hover {
+    background-color: #f1f1f1 !important;
+}
+
+.expired-row td {
+    opacity: 0.7;
+}
+
+/* 折叠按钮样式 */
+#toggle-expired {
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+#toggle-expired:hover {
+    background-color: #e2e6ea;
+    border-color: #dae0e5;
+}
+
+/* 切换按钮动画 */
+#toggle-expired .badge {
+    transition: all 0.3s ease;
+}
+
+/* 近期论文样式 */
+.upcoming-row {
+    background-color: rgba(40, 167, 69, 0.05) !important;
+}
+
+.upcoming-row:hover {
+    background-color: rgba(40, 167, 69, 0.1) !important;
+}
+
+/* 状态标签 */
+.legend {
+    font-size: 0.85rem;
+}
+
+/* 表格头部显示/隐藏控制栏 */
+.table-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+} 
