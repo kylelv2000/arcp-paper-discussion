@@ -100,16 +100,23 @@ body {
 #toggle-expired {
     margin-bottom: 0.5rem;
     transition: all 0.3s ease;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
 }
 
 #toggle-expired:hover {
     background-color: #e2e6ea;
     border-color: #dae0e5;
+    transform: translateY(-1px);
 }
 
-/* 切换按钮动画 */
 #toggle-expired .badge {
     transition: all 0.3s ease;
+    margin-left: 5px;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.4rem;
 }
 
 /* 近期论文样式 */
@@ -133,7 +140,7 @@ body {
     flex-direction: column;
     align-items: center;
     border-radius: 6px;
-    width: 80px;
+    width: 70px;
     text-align: center;
     background-color: #f7f7f7;
     border: 1px solid #e0e0e0;
@@ -154,28 +161,28 @@ body {
     color: white;
     font-weight: 600;
     width: 100%;
-    padding: 6px 0;
+    padding: 4px 0;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .date-display .month {
-    font-size: 0.95em;
-    margin-right: 3px;
+    font-size: 0.85em;
+    margin-right: 2px;
 }
 
 .date-display .day {
-    font-size: 1.1em;
-    font-weight: bold;
+    font-size: 0.85em;
+    margin-right: 2px;
 }
 
 .date-display .year {
-    font-size: 0.8em;
+    font-size: 0.75em;
     color: #555;
     background-color: #f0f0f0;
     width: 100%;
-    padding: 3px 0;
+    padding: 2px 0;
 }
 
 /* 表格头部显示/隐藏控制栏 */
