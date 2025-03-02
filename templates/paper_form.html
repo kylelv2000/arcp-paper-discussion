@@ -34,7 +34,28 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 这里可以添加日期选择器等增强功能
+    // 为日期输入框添加交互性，方便用户输入正确的格式
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        dateInput.addEventListener('blur', function() {
+            const val = this.value.trim();
+            // 简单的日期格式验证和格式化
+            if (val && !/^\d{4}\/\d{2}\/\d{2}$/.test(val)) {
+                // 尝试将其他格式转换为YYYY/MM/DD
+                try {
+                    const date = new Date(val);
+                    if (!isNaN(date.getTime())) {
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        this.value = `${year}/${month}/${day}`;
+                    }
+                } catch (e) {
+                    console.error('日期格式化失败', e);
+                }
+            }
+        });
+    }
 });
 </script>
 {% endblock %} 

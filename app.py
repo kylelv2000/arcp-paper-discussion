@@ -69,17 +69,12 @@ def load_user(user_id):
 @app.route('/')
 def index():
     today = datetime.now().date()
+    current_year = today.year
     
-    # 获取未过期的论文，按日期升序排列
-    upcoming_papers = Paper.query.filter(Paper.date >= today).order_by(Paper.date).all()
+    # 获取所有论文，统一按日期升序排列
+    papers = Paper.query.order_by(Paper.date).all()
     
-    # 获取已过期的论文，按日期降序排列（最近的排在前面）
-    past_papers = Paper.query.filter(Paper.date < today).order_by(Paper.date.desc()).all()
-    
-    # 合并两个列表
-    papers = upcoming_papers + past_papers
-    
-    return render_template('index.html', papers=papers, today=today)
+    return render_template('index.html', papers=papers, today=today, current_year=current_year)
 
 @app.route('/paper/add', methods=['GET', 'POST'])
 def add_paper():

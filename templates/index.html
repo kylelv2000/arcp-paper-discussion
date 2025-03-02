@@ -12,10 +12,6 @@
         {% if papers %}
         <div class="table-responsive">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <button id="toggle-expired" class="btn btn-sm btn-outline-secondary">
-                    <span id="toggle-expired-text">显示已过期安排</span>
-                    <span class="badge bg-secondary ms-1" id="expired-count">0</span>
-                </button>
                 <div class="legend">
                     <span class="badge bg-success me-2">近期安排</span>
                     <span class="badge bg-light text-dark border me-2">未来安排</span>
@@ -36,8 +32,16 @@
                     {% for paper in papers %}
                     {% set is_expired = paper.date < today %}
                     {% set is_upcoming = paper.date >= today and (paper.date - today).days <= 7 %}
-                    <tr class="{% if is_expired %}expired-row{% elif is_upcoming %}upcoming-row{% endif %}" data-expired="{{ 'true' if is_expired else 'false' }}">
-                        <td>{{ paper.date.strftime('%Y/%m/%d') }}</td>
+                    <tr class="{% if is_expired %}expired-row{% elif is_upcoming %}upcoming-row{% endif %}">
+                        <td>
+                            <div class="date-display">
+                                <span class="month">{{ paper.date.strftime('%m') }}月</span>
+                                <span class="day">{{ paper.date.strftime('%d') }}日</span>
+                                {% if paper.date.year != current_year %}
+                                <span class="year">{{ paper.date.year }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
                         <td>{{ paper.presenter }}</td>
                         <td>{{ paper.title }}</td>
                         <td>
@@ -72,32 +76,13 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 初始化过期行数和折叠状态
-    const expiredRows = document.querySelectorAll('tr[data-expired="true"]');
-    const expiredCount = document.getElementById('expired-count');
-    const toggleBtn = document.getElementById('toggle-expired');
-    const toggleText = document.getElementById('toggle-expired-text');
-    
-    // 设置过期行数
-    expiredCount.textContent = expiredRows.length;
-    
-    // 默认隐藏过期行
-    let showExpired = false;
-    updateExpiredRowsVisibility();
-    
-    // 添加点击事件
-    toggleBtn.addEventListener('click', function() {
-        showExpired = !showExpired;
-        updateExpiredRowsVisibility();
-    });
-    
-    function updateExpiredRowsVisibility() {
-        expiredRows.forEach(row => {
-            row.style.display = showExpired ? 'table-row' : 'none';
+    // 美化日期显示效果的额外交互
+    const dateDisplays = document.querySelectorAll('.date-display');
+    dateDisplays.forEach(display => {
+        display.addEventListener('mouseenter', function() {
+            this.style.cursor = 'default';
         });
-        
-        toggleText.textContent = showExpired ? '隐藏已过期安排' : '显示已过期安排';
-    }
+    });
 });
 </script>
 {% endblock %} 
