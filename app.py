@@ -338,10 +338,18 @@ def send_notification():
     if not upcoming_paper:
         return
         
-    # 如果目标日期就是论文讲解日期，并且当前时间已经超过了通知时间，则发送通知
+    # 只有在目标日期等于论文讲解日期时才继续
     if upcoming_paper.date == target_date:
         current_time = datetime.now().time()
-        if current_time >= config.notification_time:
+        notification_time = config.notification_time
+        
+        # 计算当前时间与通知时间的时间差（分钟）
+        current_minutes = current_time.hour * 60 + current_time.minute
+        notification_minutes = notification_time.hour * 60 + notification_time.minute
+        
+        # 只在通知时间的前后30分钟内发送通知
+        # 这样确保即使定时任务每小时运行一次，通知也只会发送一次
+        if abs(current_minutes - notification_minutes) <= 30:
             # 获取后续3次的安排
             future_papers = Paper.query.filter(Paper.date > upcoming_paper.date).order_by(Paper.date).limit(3).all()
             
