@@ -344,12 +344,13 @@ def send_notification():
         notification_time = config.notification_time
         
         # 计算当前时间与通知时间的时间差（分钟）
-        current_minutes = current_time.hour * 60 + current_time.minute
-        notification_minutes = notification_time.hour * 60 + notification_time.minute
+        # current_minutes = current_time.hour * 60 + current_time.minute
+        # notification_minutes = notification_time.hour * 60 + notification_time.minute
         
         # 只在通知时间的前后30分钟内发送通知
         # 这样确保即使定时任务每小时运行一次，通知也只会发送一次
-        if abs(current_minutes - notification_minutes) <= 30:
+        # if abs(current_minutes - notification_minutes) <= 30:
+        if True:
             # 获取后续3次的安排
             future_papers = Paper.query.filter(Paper.date > upcoming_paper.date).order_by(Paper.date).limit(3).all()
             
@@ -417,7 +418,7 @@ def db_init():
 
 # 定时任务
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=send_notification, trigger='interval', minutes=60)
+scheduler.add_job(func=send_notification, trigger='interval', hours=24)
 scheduler.start()
 
 # 确保应用退出时关闭定时任务
