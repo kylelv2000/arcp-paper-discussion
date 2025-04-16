@@ -326,61 +326,62 @@ def send_notification_now():
 
 # 发送邮件通知的函数
 def send_notification():
-    config = EmailConfig.query.first()
-    if not config or not config.enabled:
-        return
-        
-    today = datetime.now().date()
-    target_date = today + timedelta(days=config.days_before)
-    
-    # 查找最近的讲解安排
-    upcoming_paper = Paper.query.filter(Paper.date >= today).order_by(Paper.date).first()
-    if not upcoming_paper:
-        return
-        
-    # 只有在目标日期等于论文讲解日期时才继续
-    if upcoming_paper.date == target_date:
-        current_time = datetime.now().time()
-        notification_time = config.notification_time
-        
-        # 计算当前时间与通知时间的时间差（分钟）
-        # current_minutes = current_time.hour * 60 + current_time.minute
-        # notification_minutes = notification_time.hour * 60 + notification_time.minute
-        
-        # 只在通知时间的前后30分钟内发送通知
-        # 这样确保即使定时任务每小时运行一次，通知也只会发送一次
-        # if abs(current_minutes - notification_minutes) <= 30:
-        if True:
-            # 获取后续3次的安排
-            future_papers = Paper.query.filter(Paper.date > upcoming_paper.date).order_by(Paper.date).limit(3).all()
+    with app.app_context():
+        config = EmailConfig.query.first()
+        if not config or not config.enabled:
+            return
             
-            # 准备邮件内容
-            subject = f"论文讲解提醒: {upcoming_paper.date.strftime('%Y/%m/%d')}"
-            recipients = [r.email for r in EmailRecipient.query.all()]
+        today = datetime.now().date()
+        target_date = today + timedelta(days=config.days_before)
+        
+        # 查找最近的讲解安排
+        upcoming_paper = Paper.query.filter(Paper.date >= today).order_by(Paper.date).first()
+        if not upcoming_paper:
+            return
             
-            if not recipients:
-                return
+        # 只有在目标日期等于论文讲解日期时才继续
+        if upcoming_paper.date == target_date:
+            current_time = datetime.now().time()
+            notification_time = config.notification_time
+            
+            # 计算当前时间与通知时间的时间差（分钟）
+            # current_minutes = current_time.hour * 60 + current_time.minute
+            # notification_minutes = notification_time.hour * 60 + notification_time.minute
+            
+            # 只在通知时间的前后30分钟内发送通知
+            # 这样确保即使定时任务每小时运行一次，通知也只会发送一次
+            # if abs(current_minutes - notification_minutes) <= 30:
+            if True:
+                # 获取后续3次的安排
+                future_papers = Paper.query.filter(Paper.date > upcoming_paper.date).order_by(Paper.date).limit(3).all()
                 
-            body = f"""
-            提醒：下次论文讲解安排
-            
-            时间：{upcoming_paper.date.strftime('%Y/%m/%d')}
-            讲解人：{upcoming_paper.presenter}
-            论文名称：{upcoming_paper.title}
-            
-            未来安排：
-            """
-            
-            for paper in future_papers:
-                body += f"\n{paper.date.strftime('%Y/%m/%d')} - {paper.presenter} - {paper.title}"
+                # 准备邮件内容
+                subject = f"论文讲解提醒: {upcoming_paper.date.strftime('%Y/%m/%d')}"
+                recipients = [r.email for r in EmailRecipient.query.all()]
                 
-            body += """
+                if not recipients:
+                    return
+                    
+                body = f"""
+                提醒：下次论文讲解安排
+                
+                时间：{upcoming_paper.date.strftime('%Y/%m/%d')}
+                讲解人：{upcoming_paper.presenter}
+                论文名称：{upcoming_paper.title}
+                
+                未来安排：
+                """
+                
+                for paper in future_papers:
+                    body += f"\n{paper.date.strftime('%Y/%m/%d')} - {paper.presenter} - {paper.title}"
+                    
+                body += """
 
-            请访问我们的网站 https://arcp.kylelv.com/ 查看和编辑具体安排。
-            """
-            
-            msg = Message(subject=subject, recipients=recipients, body=body)
-            mail.send(msg)
+                请访问我们的网站 https://arcp.kylelv.com/ 查看和编辑具体安排。
+                """
+                
+                msg = Message(subject=subject, recipients=recipients, body=body)
+                mail.send(msg)
 
 # 初始化数据库
 @app.cli.command('db-init')
