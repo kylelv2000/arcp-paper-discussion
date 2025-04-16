@@ -115,7 +115,12 @@ def edit_paper(id):
     return render_template('paper_form.html', paper=paper)
 
 @app.route('/paper/delete/<int:id>')
+@login_required
 def delete_paper(id):
+    if not current_user.is_admin:
+        flash('无权限删除论文安排', 'danger')
+        return redirect(url_for('index'))
+        
     paper = Paper.query.get_or_404(id)
     db.session.delete(paper)
     db.session.commit()
