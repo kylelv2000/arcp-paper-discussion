@@ -61,6 +61,13 @@ class EmailRecipient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
 
+class SentNotification(db.Model):
+    """记录已发送的通知，防止重复发送"""
+    id = db.Column(db.Integer, primary_key=True)
+    paper_id = db.Column(db.Integer, nullable=False)
+    sent_date = db.Column(db.Date, nullable=False)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -244,7 +251,7 @@ def update_email_config():
     email_config.enabled = 'enabled' in request.form
     
     db.session.commit()
-    flash('邮件通知设置已更新', 'success')
+    flash('邮件通知设置已更新，下次检查时生效', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/recipient/add', methods=['POST'])
@@ -321,7 +328,12 @@ def send_notification_now():
     """
     
     try:
-        msg = Message(subject=subject, recipients=recipients, body=body)
+        msg = Message(
+            subject=subject, 
+            recipients=recipients, 
+            body=body,
+            sender=('ARCP讨论班', app.config['MAIL_DEFAULT_SENDER'])
+        )
         mail.send(msg)
         flash('通知邮件已成功发送', 'success')
     except Exception as e:
@@ -331,62 +343,87 @@ def send_notification_now():
 
 # 发送邮件通知的函数
 def send_notification():
+    """检查并发送邮件通知"""
     with app.app_context():
         config = EmailConfig.query.first()
         if not config or not config.enabled:
             return
-            
-        today = datetime.now().date()
+        
+        now = datetime.now()
+        today = now.date()
+        current_time = now.time()
+        notification_time = config.notification_time
+        
+        # 计算当前时间与通知时间的分钟差
+        current_minutes = current_time.hour * 60 + current_time.minute
+        notification_minutes = notification_time.hour * 60 + notification_time.minute
+        time_diff = abs(current_minutes - notification_minutes)
+        
+        # 只在通知时间前后30分钟内才发送
+        # 配合每30分钟检查一次，保证至少命中一次
+        if time_diff > 30:
+            return
+        
+        # 计算应该发送通知的论文日期
         target_date = today + timedelta(days=config.days_before)
         
-        # 查找最近的讲解安排
-        upcoming_paper = Paper.query.filter(Paper.date >= today).order_by(Paper.date).first()
-        if not upcoming_paper:
+        # 查找目标日期的论文
+        paper = Paper.query.filter(Paper.date == target_date).first()
+        if not paper:
             return
-            
-        # 只有在目标日期等于论文讲解日期时才继续
-        if upcoming_paper.date == target_date:
-            current_time = datetime.now().time()
-            notification_time = config.notification_time
-            
-            # 计算当前时间与通知时间的时间差（分钟）
-            # current_minutes = current_time.hour * 60 + current_time.minute
-            # notification_minutes = notification_time.hour * 60 + notification_time.minute
-            
-            # 只在通知时间的前后30分钟内发送通知
-            # 这样确保即使定时任务每小时运行一次，通知也只会发送一次
-            # if abs(current_minutes - notification_minutes) <= 30:
-            if True:
-                # 获取后续3次的安排
-                future_papers = Paper.query.filter(Paper.date > upcoming_paper.date).order_by(Paper.date).limit(3).all()
-                
-                # 准备邮件内容
-                subject = f"论文讲解提醒: {upcoming_paper.date.strftime('%Y/%m/%d')}"
-                recipients = [r.email for r in EmailRecipient.query.all()]
-                
-                if not recipients:
-                    return
-                    
-                body = f"""
-                提醒：下次论文讲解安排
-                
-                时间：{upcoming_paper.date.strftime('%Y/%m/%d')}
-                讲解人：{upcoming_paper.presenter}
-                论文名称：{upcoming_paper.title}
-                
-                未来安排：
-                """
-                
-                for paper in future_papers:
-                    body += f"\n{paper.date.strftime('%Y/%m/%d')} - {paper.presenter} - {paper.title}"
-                    
-                body += """
+        
+        # 检查今天是否已经发送过这篇论文的通知（防止重复）
+        existing = SentNotification.query.filter_by(
+            paper_id=paper.id,
+            sent_date=today
+        ).first()
+        if existing:
+            return
+        
+        # 获取收件人列表
+        recipients = [r.email for r in EmailRecipient.query.all()]
+        if not recipients:
+            return
+        
+        # 获取后续3次的安排
+        future_papers = Paper.query.filter(Paper.date > paper.date).order_by(Paper.date).limit(3).all()
+        
+        # 准备邮件内容
+        subject = f"论文讲解提醒: {paper.date.strftime('%Y/%m/%d')}"
+        body = f"""
+提醒：下次论文讲解安排
 
-                请访问我们的网站 https://arcp.kylelv.com/ 查看和编辑具体安排。
-                """
-                
-                msg = Message(subject=subject, recipients=recipients, body=body)
-                mail.send(msg)
+时间：{paper.date.strftime('%Y/%m/%d')}
+讲解人：{paper.presenter}
+论文名称：{paper.title}
+
+未来安排：
+"""
+        
+        for p in future_papers:
+            body += f"\n{p.date.strftime('%Y/%m/%d')} - {p.presenter} - {p.title}"
+        
+        body += """
+
+请访问我们的网站 https://arcp.kylelv.com/ 查看和编辑具体安排。
+"""
+        
+        try:
+            msg = Message(
+                subject=subject, 
+                recipients=recipients, 
+                body=body,
+                sender=('ARCP讨论班', app.config['MAIL_DEFAULT_SENDER'])
+            )
+            mail.send(msg)
+            
+            # 记录已发送，防止重复
+            notification = SentNotification(paper_id=paper.id, sent_date=today)
+            db.session.add(notification)
+            db.session.commit()
+            print(f"✓ 邮件通知已发送: {paper.title} ({paper.date})")
+        except Exception as e:
+            print(f"✗ 邮件发送失败: {str(e)}")
 
 # 初始化数据库
 @app.cli.command('db-init')
@@ -423,12 +460,29 @@ def db_init():
         print('数据库初始化完成!')
 
 # 定时任务
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=send_notification, trigger='interval', hours=24)
-scheduler.start()
+def init_scheduler():
+    """初始化定时任务 - 每30分钟检查一次，确保不漏通知"""
+    scheduler = BackgroundScheduler()
+    # 每30分钟检查一次，配合30分钟时间窗口，保证至少检查一次
+    scheduler.add_job(
+        func=send_notification, 
+        trigger='interval',
+        minutes=30,
+        id='email_notification'
+    )
+    scheduler.start()
+    
+    # 启动时立即检查一次
+    send_notification()
+    
+    # 确保应用退出时关闭定时任务
+    atexit.register(lambda: scheduler.shutdown())
+    return scheduler
 
-# 确保应用退出时关闭定时任务
-atexit.register(lambda: scheduler.shutdown())
+# 在应用上下文中初始化调度器
+with app.app_context():
+    db.create_all()
+    scheduler = init_scheduler()
 
 if __name__ == '__main__':
     app.run(debug=True) 
