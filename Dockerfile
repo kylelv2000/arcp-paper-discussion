@@ -18,8 +18,8 @@ RUN pip install --no-cache-dir waitress
 ENV FLASK_APP=app.py
 ENV PYTHONUNBUFFERED=1
 
-# 赋予入口脚本执行权限
-RUN chmod +x /app/docker_entrypoint.sh
+# 转换行尾符并赋予执行权限
+RUN sed -i 's/\r$//' /app/docker_entrypoint.sh && chmod +x /app/docker_entrypoint.sh
 
 # 暴露端口
 EXPOSE 5000
