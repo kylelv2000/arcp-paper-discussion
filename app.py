@@ -135,7 +135,12 @@ def delete_paper(id):
     return redirect(url_for('index'))
 
 @app.route('/papers/shift/<direction>')
+@login_required
 def shift_papers(direction):
+    if not current_user.is_admin:
+        flash('无权限执行此操作', 'danger')
+        return redirect(url_for('index'))
+        
     today = datetime.now().date()
     # 获取所有未过期的论文安排
     future_papers = Paper.query.filter(Paper.date >= today).all()
