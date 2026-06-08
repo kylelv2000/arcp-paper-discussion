@@ -16,7 +16,18 @@
             </div>
             <div class="mb-3">
                 <label for="presenter" class="form-label">讲解人</label>
-                <input type="text" class="form-control" id="presenter" name="presenter" value="{{ paper.presenter if paper else '' }}" required>
+                {% set current = paper.presenter if paper else '' %}
+                {% set member_names = members | map(attribute='name') | list %}
+                <select class="form-select" id="presenter" name="presenter" required>
+                    <option value="" disabled {% if not current %}selected{% endif %}>请选择讲解人</option>
+                    {% for member in members %}
+                    <option value="{{ member.name }}" {% if member.name == current %}selected{% endif %}>{{ member.name }}（{{ member.grade_label }}）</option>
+                    {% endfor %}
+                    {% if current and current not in member_names %}
+                    <option value="{{ current }}" selected>{{ current }}（已移除成员）</option>
+                    {% endif %}
+                </select>
+                <div class="form-text">讲解人来自后台「成员管理」，如需新增请先在后台添加成员。</div>
             </div>
             <div class="mb-3">
                 <label for="title" class="form-label">论文名称</label>

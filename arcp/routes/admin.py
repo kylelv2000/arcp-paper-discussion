@@ -3,9 +3,10 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_mail import Message
 from arcp.extensions import db, mail
-from arcp.models import User, Paper, EmailConfig, Member
+from arcp.models import User, Paper, EmailConfig, Member, MeetingConfig, WEEKDAY_LABELS
 from arcp.services import (
     ordered_members, reset_member_order, next_order_index, notification_emails,
+    schedule_new_round,
 )
 
 admin_bp = Blueprint('admin', __name__)
@@ -80,8 +81,41 @@ def admin_dashboard():
         db.session.add(email_config)
         db.session.commit()
 
+    meeting_config = MeetingConfig.query.first()
+    if not meeting_config:
+        meeting_config = MeetingConfig()
+        db.session.add(meeting_config)
+        db.session.commit()
+
     members = ordered_members()
-    return render_template('admin_dashboard.html', email_config=email_config, members=members)
+    return render_template(
+        'admin_dashboard.html',
+        email_config=email_config,
+        members=members,
+        meeting_config=meeting_config,
+        weekday_labels=WEEKDAY_LABELS,
+    )
+
+@admin_bp.route('/admin/meeting_config', methods=['POST'])
+@login_required
+def update_meeting_config():
+    if not current_user.is_admin:
+        return jsonify({'status': 'error', 'message': '无权限'}), 403
+
+    meeting_config = MeetingConfig.query.first()
+    if not meeting_config:
+        meeting_config = MeetingConfig()
+        db.session.add(meeting_config)
+
+    try:
+        weekday = int(request.form['weekday'])
+    except (KeyError, ValueError):
+        weekday = meeting_config.weekday
+    if 0 <= weekday <= 6:
+        meeting_config.weekday = weekday
+    db.session.commit()
+    flash('每周开会日已更新', 'success')
+    return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/admin/email_config', methods=['POST'])
 @login_required
@@ -261,6 +295,17 @@ def delete_paper(id):
     db.session.delete(paper)
     db.session.commit()
     flash('论文安排已删除', 'success')
+    return redirect(url_for('main.index'))
+
+@admin_bp.route('/papers/new_round')
+@login_required
+def new_round():
+    if not current_user.is_admin:
+        flash('无权限执行此操作', 'danger')
+        return redirect(url_for('main.index'))
+
+    count, message = schedule_new_round()
+    flash(message, 'success' if count else 'warning')
     return redirect(url_for('main.index'))
 
 @admin_bp.route('/papers/shift/<direction>')

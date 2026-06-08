@@ -68,12 +68,26 @@
     <div class="col-lg-6 mb-4">
         <div class="card h-100">
             <div class="card-header">
-                <h2>邮件通知说明</h2>
+                <h2>讨论班开会日</h2>
             </div>
             <div class="card-body">
+                <form method="post" action="{{ url_for('admin.update_meeting_config') }}">
+                    <div class="mb-3">
+                        <label for="weekday" class="form-label">每周开会日</label>
+                        <select class="form-select" id="weekday" name="weekday">
+                            {% for i in range(0, 7) %}
+                            <option value="{{ i }}" {% if meeting_config.weekday == i %}selected{% endif %}>{{ weekday_labels[i] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">「安排新轮」将依据此开会日，为每位成员按周排定讲解日期。</div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">保存开会日</button>
+                    </div>
+                </form>
+                <hr>
                 <div class="alert alert-info mb-0">
-                    <p class="mb-2">通知邮件将发送给<strong>所有填写了邮箱的成员</strong>。讲解人与收件人已统一在「成员管理」中维护。</p>
-                    <p class="mb-0">如需新增收件人，请在下方成员管理中为成员补充邮箱地址。</p>
+                    通知邮件将发送给<strong>所有填写了邮箱的成员</strong>，讲解人与收件人已统一在下方「成员管理」中维护。
                 </div>
             </div>
         </div>

@@ -2,6 +2,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from arcp.extensions import db
 from arcp.models import Paper
+from arcp.services import ordered_members
 
 main_bp = Blueprint('main', __name__)
 
@@ -31,8 +32,8 @@ def add_paper():
             return redirect(url_for('main.index'))
         except Exception as e:
             flash(f'添加失败: {str(e)}', 'danger')
-    
-    return render_template('paper_form.html')
+
+    return render_template('paper_form.html', members=ordered_members())
 
 @main_bp.route('/paper/edit/<int:id>', methods=['GET', 'POST'])
 def edit_paper(id):
@@ -50,5 +51,5 @@ def edit_paper(id):
             return redirect(url_for('main.index'))
         except Exception as e:
             flash(f'更新失败: {str(e)}', 'danger')
-    
-    return render_template('paper_form.html', paper=paper)
+
+    return render_template('paper_form.html', paper=paper, members=ordered_members())
