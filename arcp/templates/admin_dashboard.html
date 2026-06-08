@@ -10,7 +10,7 @@
                 <h2>修改管理员密码</h2>
             </div>
             <div class="card-body">
-                <form method="post" action="{{ url_for('change_admin_password_web') }}" class="row g-3">
+                <form method="post" action="{{ url_for('admin.change_admin_password_web') }}" class="row g-3">
                     <div class="col-md-4">
                         <label for="current_password" class="form-label">当前密码</label>
                         <input type="password" class="form-control" id="current_password" name="current_password" required>
@@ -40,7 +40,7 @@
                 <h2>邮件通知设置</h2>
             </div>
             <div class="card-body">
-                <form method="post" action="{{ url_for('update_email_config') }}">
+                <form method="post" action="{{ url_for('admin.update_email_config') }}">
                     <div class="mb-3 form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="enabled" name="enabled" {% if email_config.enabled %}checked{% endif %}>
                         <label class="form-check-label" for="enabled">启用邮件通知</label>
@@ -71,7 +71,7 @@
                 <h2>邮件收件人管理</h2>
             </div>
             <div class="card-body">
-                <form method="post" action="{{ url_for('add_recipient') }}" class="mb-4">
+                <form method="post" action="{{ url_for('admin.add_recipient') }}" class="mb-4">
                     <div class="input-group">
                         <input type="email" class="form-control" id="email" name="email" placeholder="请输入邮箱地址" required>
                         <button type="submit" class="btn btn-primary">添加收件人</button>
@@ -92,7 +92,7 @@
                             <tr>
                                 <td>{{ recipient.email }}</td>
                                 <td>
-                                    <a href="{{ url_for('delete_recipient', id=recipient.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定要删除这个收件人吗？')">删除</a>
+                                    <a href="{{ url_for('admin.delete_recipient', id=recipient.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定要删除这个收件人吗？')">删除</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -115,8 +115,8 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h2>当前论文安排</h2>
                 <div>
-                    <a href="{{ url_for('send_notification_now') }}" class="btn btn-success me-2" onclick="return confirm('确定要立即发送通知邮件吗？')">立即发送通知</a>
-                    <a href="{{ url_for('index') }}" class="btn btn-primary">查看和管理安排</a>
+                    <a href="{{ url_for('admin.send_notification_now') }}" class="btn btn-success me-2" onclick="return confirm('确定要立即发送通知邮件吗？')">立即发送通知</a>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary">查看和管理安排</a>
                 </div>
             </div>
             <div class="card-body">

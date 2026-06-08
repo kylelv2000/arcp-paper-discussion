@@ -1,12 +1,11 @@
-version: '3'
-
 services:
   web:
     image: komqaq/arcp-paper-discussion:latest
     ports:
-      - "5000:5000"
+      - "5001:5001"
+
     volumes:
-      - ./data:/app/data
+      - ./instance:/app/instance
     env_file:
       - .env
     restart: always
