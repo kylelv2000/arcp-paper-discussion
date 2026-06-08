@@ -44,14 +44,19 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h3>{{ quarter.label }} 报销事项</h3>
                 {% if quarter.is_current %}
-                <span class="badge bg-success">可添加和修改</span>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary copy-reimbursement-btn"
+                            data-target="reimbursementExport{{ quarter.number }}">复制当前季度报销信息</button>
+                    <span class="badge bg-success">可添加和修改</span>
+                </div>
                 {% else %}
                 <span class="badge bg-light text-dark border">仅查看</span>
                 {% endif %}
             </div>
 
             {% if quarter.is_current %}
-            <form method="post" action="{{ url_for('main.add_reimbursement_item') }}" enctype="multipart/form-data" class="row g-3 align-items-end reimbursement-form">
+            <textarea id="reimbursementExport{{ quarter.number }}" class="visually-hidden">{{ quarter.export_text }}</textarea>
+            <form method="post" action="{{ url_for('main.add_reimbursement_item') }}" class="row g-3 align-items-end reimbursement-form">
                 <div class="col-md-3">
                     <label class="form-label">用户</label>
                     <select class="form-select" name="member_name" required>
@@ -61,13 +66,21 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-7">
                     <label class="form-label">报销内容</label>
-                    <input type="text" class="form-control" name="content" maxlength="500" placeholder="最多 50 词" required>
+                    <input type="text" class="form-control" name="content" maxlength="500"
+                           placeholder="写清楚报销金额、用途，最多 50 词" required>
+                    <div class="form-text">请写清楚报销金额、用途。材料请私下传递，网站只统计信息。</div>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">ZIP 文件</label>
-                    <input type="file" class="form-control" name="zip_file" accept=".zip,application/zip" required>
+                <div class="col-md-10">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="materials_complete" name="materials_complete" value="1" required>
+                        <label class="form-check-label" for="materials_complete">确认发票、付款记录、账单流水齐全或已核对清楚</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="teacher_acknowledged" name="teacher_acknowledged" value="1" required>
+                        <label class="form-check-label" for="teacher_acknowledged">确认该信息会给到相关老师审批</label>
+                    </div>
                 </div>
                 <div class="col-md-2 d-grid">
                     <button type="submit" class="btn btn-primary">添加</button>
@@ -82,7 +95,7 @@
                         <tr>
                             <th style="width: 120px;">用户</th>
                             <th>报销内容</th>
-                            <th class="text-center" style="width: 120px;">文件</th>
+                            <th class="text-center" style="width: 150px;">材料状态</th>
                             <th class="text-center" style="width: 160px;">更新时间</th>
                             {% if quarter.is_current %}
                             <th class="text-center" style="width: 150px;">操作</th>
@@ -95,7 +108,11 @@
                             <td class="fw-semibold">{{ item.member_name }}</td>
                             <td>{{ item.content }}</td>
                             <td class="text-center">
-                                <a href="{{ url_for('main.download_reimbursement_zip', id=item.id) }}" class="btn btn-sm btn-outline-primary">下载</a>
+                                {% if item.materials_complete %}
+                                <span class="badge bg-success">已确认齐全</span>
+                                {% else %}
+                                <span class="badge bg-light text-dark border">未确认</span>
+                                {% endif %}
                             </td>
                             <td class="text-muted text-center">{{ item.updated_at.strftime('%Y-%m-%d') }}</td>
                             {% if quarter.is_current %}
@@ -123,7 +140,7 @@
             {% for item in quarter.reimbursement_items %}
             <div class="modal fade" id="editReimbursement{{ item.id }}" tabindex="-1">
                 <div class="modal-dialog">
-                    <form method="post" action="{{ url_for('main.edit_reimbursement_item', id=item.id) }}" enctype="multipart/form-data" class="modal-content">
+                    <form method="post" action="{{ url_for('main.edit_reimbursement_item', id=item.id) }}" class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">修改报销事项</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -136,12 +153,17 @@
                             <div class="mb-3">
                                 <label class="form-label">报销内容</label>
                                 <input type="text" class="form-control" name="content" value="{{ item.content }}" maxlength="500" required>
-                                <div class="form-text">最多 50 词。</div>
+                                <div class="form-text">请写清楚报销金额、用途，最多 50 词。</div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">替换 ZIP 文件</label>
-                                <input type="file" class="form-control" name="zip_file" accept=".zip,application/zip">
-                                <div class="form-text">留空则保留当前 ZIP，最大 100MB。</div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="materialsComplete{{ item.id }}" name="materials_complete" value="1" required {% if item.materials_complete %}checked{% endif %}>
+                                    <label class="form-check-label" for="materialsComplete{{ item.id }}">确认发票、付款记录、账单流水齐全或已核对清楚</label>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="teacherAcknowledged{{ item.id }}" name="teacher_acknowledged" value="1" required {% if item.teacher_acknowledged %}checked{% endif %}>
+                                    <label class="form-check-label" for="teacherAcknowledged{{ item.id }}">确认该信息会给到相关老师审批</label>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -155,4 +177,33 @@
         {% endfor %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.copy-reimbursement-btn').forEach(button => {
+        button.addEventListener('click', async function() {
+            const target = document.getElementById(this.dataset.target);
+            if (!target) {
+                return;
+            }
+            const text = target.value;
+            try {
+                await navigator.clipboard.writeText(text);
+                this.textContent = '已复制';
+            } catch (error) {
+                target.classList.remove('visually-hidden');
+                target.select();
+                document.execCommand('copy');
+                target.classList.add('visually-hidden');
+                this.textContent = '已复制';
+            }
+            setTimeout(() => {
+                this.textContent = '复制当前季度报销信息';
+            }, 1800);
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -12,7 +12,6 @@ from arcp.models import Member, MeetingConfig, EmailRecipient, Paper
 def ensure_database(app):
     with app.app_context():
         os.makedirs(app.config['PAPER_UPLOAD_FOLDER'], exist_ok=True)
-        os.makedirs(app.config['REIMBURSEMENT_UPLOAD_FOLDER'], exist_ok=True)
 
         # 仅创建缺失的表，不会改动已存在的表
         db.create_all()
@@ -57,6 +56,18 @@ def _ensure_columns():
             db.session.execute(text('ALTER TABLE paper ADD COLUMN pdf_filename VARCHAR(255)'))
         if 'pdf_original_filename' not in paper_columns:
             db.session.execute(text('ALTER TABLE paper ADD COLUMN pdf_original_filename VARCHAR(255)'))
+        db.session.commit()
+
+    if 'reimbursement_item' in tables:
+        item_columns = {col['name'] for col in inspector.get_columns('reimbursement_item')}
+        if 'materials_complete' not in item_columns:
+            db.session.execute(text(
+                'ALTER TABLE reimbursement_item ADD COLUMN materials_complete BOOLEAN NOT NULL DEFAULT 0'
+            ))
+        if 'teacher_acknowledged' not in item_columns:
+            db.session.execute(text(
+                'ALTER TABLE reimbursement_item ADD COLUMN teacher_acknowledged BOOLEAN NOT NULL DEFAULT 0'
+            ))
         db.session.commit()
 
 

@@ -13,12 +13,6 @@ from arcp.services import ordered_members, next_open_meeting_date
 
 main_bp = Blueprint('main', __name__)
 PDF_MIMETYPES = {'application/pdf', 'application/x-pdf'}
-ZIP_MIMETYPES = {
-    'application/zip',
-    'application/x-zip-compressed',
-    'application/octet-stream',
-    'multipart/x-zip',
-}
 QUARTER_RANGES = {
     1: '1月 - 3月',
     2: '4月 - 6月',
@@ -104,63 +98,39 @@ def _validate_member_name(member_name):
     return value
 
 
-def _validate_zip_upload(file, required=False):
-    if not file or not file.filename:
-        if required:
-            raise ValueError('请上传报销 ZIP 文件')
-        return None
-
-    original_name = file.filename
-    if not original_name.lower().endswith('.zip'):
-        raise ValueError('只能上传 ZIP 文件')
-
-    stream = file.stream
-    stream.seek(0, os.SEEK_END)
-    size = stream.tell()
-    stream.seek(0)
-    if size <= 0:
-        raise ValueError('ZIP 文件不能为空')
-    if size > current_app.config['MAX_REIMBURSEMENT_UPLOAD_SIZE']:
-        raise ValueError('ZIP 文件不能超过 100MB')
-
-    header = stream.read(4)
-    stream.seek(0)
-    if header not in (b'PK\x03\x04', b'PK\x05\x06', b'PK\x07\x08'):
-        raise ValueError('文件内容不是有效的 ZIP')
-    if file.mimetype and file.mimetype not in ZIP_MIMETYPES:
-        raise ValueError('只能上传 ZIP 文件')
-
-    return original_name
-
-
-def _delete_reimbursement_zip(filename):
-    if not filename:
-        return
-    path = os.path.join(current_app.config['REIMBURSEMENT_UPLOAD_FOLDER'], filename)
-    if os.path.exists(path):
-        os.remove(path)
-
-
-def _save_reimbursement_zip(item, file, required=False):
-    original_name = _validate_zip_upload(file, required=required)
-    if not original_name:
-        return
-
-    old_filename = item.zip_filename
-    stored_name = f'{item.year}-q{item.quarter}-{uuid.uuid4().hex}.zip'
-    upload_dir = current_app.config['REIMBURSEMENT_UPLOAD_FOLDER']
-    os.makedirs(upload_dir, exist_ok=True)
-
-    file.save(os.path.join(upload_dir, stored_name))
-    _delete_reimbursement_zip(old_filename)
-    item.zip_filename = stored_name
-    item.zip_original_filename = os.path.basename(original_name)
+def _validate_reimbursement_confirmations(form):
+    if form.get('materials_complete') != '1':
+        raise ValueError('请确认发票、付款记录、账单流水是否齐全')
+    if form.get('teacher_acknowledged') != '1':
+        raise ValueError('请确认该信息会给到相关老师审批')
 
 
 def _require_current_reimbursement_period(year, quarter):
     current_year, current_quarter = _current_year_quarter()
     if year != current_year or quarter != current_quarter:
         raise ValueError('只能添加或修改当前季度的报销事项')
+
+
+def _build_reimbursement_export_text(year, quarter, owner, items):
+    lines = [
+        f'{year} Q{quarter} 报销信息',
+        f'负责人：{owner or "待安排"}',
+        f'报销人数：{len(items)}',
+        '',
+    ]
+    if not items:
+        lines.append('当前季度暂无报销信息。')
+        return '\n'.join(lines)
+
+    for index, item in enumerate(items, start=1):
+        lines.extend([
+            f'{index}. {item.member_name}',
+            f'报销信息：{item.content}',
+            f'发票+付款记录+账单流水是否齐全：{"是" if item.materials_complete else "未确认"}',
+            '说明：该信息将给到相关老师审批。',
+            '',
+        ])
+    return '\n'.join(lines).rstrip()
 
 
 @main_bp.route('/')
@@ -201,17 +171,20 @@ def reimbursements():
     for item in items:
         items_by_quarter.setdefault(item.quarter, []).append(item)
 
-    quarters = [
-        {
+    quarters = []
+    for quarter in range(1, 5):
+        quarter_items = items_by_quarter.get(quarter, [])
+        owner = assignments.get(quarter).student if assignments.get(quarter) else ''
+        is_current = year == current_year and quarter == current_quarter
+        quarters.append({
             'number': quarter,
             'label': f'Q{quarter}',
             'date_range': QUARTER_RANGES[quarter],
-            'student': assignments.get(quarter).student if assignments.get(quarter) else '',
-            'reimbursement_items': items_by_quarter.get(quarter, []),
-            'is_current': year == current_year and quarter == current_quarter,
-        }
-        for quarter in range(1, 5)
-    ]
+            'student': owner,
+            'reimbursement_items': quarter_items,
+            'is_current': is_current,
+            'export_text': _build_reimbursement_export_text(year, quarter, owner, quarter_items),
+        })
 
     return render_template(
         'reimbursements.html',
@@ -236,17 +209,17 @@ def add_reimbursement_item():
         ).first()
         if existing:
             raise ValueError('当前季度该用户已经添加过报销事项')
+        _validate_reimbursement_confirmations(request.form)
 
         item = ReimbursementItem(
             year=current_year,
             quarter=current_quarter,
             member_name=member_name,
             content=content,
-            zip_filename='',
-            zip_original_filename='',
+            materials_complete=True,
+            teacher_acknowledged=True,
         )
         db.session.add(item)
-        _save_reimbursement_zip(item, request.files.get('zip_file'), required=True)
         db.session.commit()
         flash('报销事项已添加', 'success')
     except IntegrityError:
@@ -264,7 +237,9 @@ def edit_reimbursement_item(id):
     try:
         _require_current_reimbursement_period(item.year, item.quarter)
         item.content = _validate_reimbursement_content(request.form.get('content'))
-        _save_reimbursement_zip(item, request.files.get('zip_file'), required=False)
+        _validate_reimbursement_confirmations(request.form)
+        item.materials_complete = True
+        item.teacher_acknowledged = True
         item.updated_at = datetime.utcnow()
         db.session.commit()
         flash('报销事项已更新', 'success')
@@ -280,7 +255,6 @@ def delete_reimbursement_item(id):
     year = item.year
     try:
         _require_current_reimbursement_period(item.year, item.quarter)
-        _delete_reimbursement_zip(item.zip_filename)
         db.session.delete(item)
         db.session.commit()
         flash('报销事项已删除', 'success')
@@ -288,22 +262,6 @@ def delete_reimbursement_item(id):
         db.session.rollback()
         flash(f'删除失败: {str(e)}', 'danger')
     return redirect(url_for('main.reimbursements', year=year))
-
-
-@main_bp.route('/reimbursements/items/<int:id>/zip')
-def download_reimbursement_zip(id):
-    item = ReimbursementItem.query.get_or_404(id)
-    path = os.path.join(current_app.config['REIMBURSEMENT_UPLOAD_FOLDER'], item.zip_filename)
-    if not os.path.exists(path):
-        abort(404)
-
-    return send_from_directory(
-        current_app.config['REIMBURSEMENT_UPLOAD_FOLDER'],
-        item.zip_filename,
-        as_attachment=True,
-        download_name=item.zip_original_filename or 'reimbursement.zip',
-        mimetype='application/zip',
-    )
 
 @main_bp.route('/paper/add', methods=['GET', 'POST'])
 def add_paper():

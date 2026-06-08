@@ -35,8 +35,10 @@ class ReimbursementItem(db.Model):
     quarter = db.Column(db.Integer, nullable=False)
     member_name = db.Column(db.String(100), nullable=False)
     content = db.Column(db.String(500), nullable=False)
-    zip_filename = db.Column(db.String(255), nullable=False)
-    zip_original_filename = db.Column(db.String(255), nullable=False)
+    zip_filename = db.Column(db.String(255), nullable=False, default='')
+    zip_original_filename = db.Column(db.String(255), nullable=False, default='')
+    materials_complete = db.Column(db.Boolean, nullable=False, default=False)
+    teacher_acknowledged = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
