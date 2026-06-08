@@ -153,7 +153,7 @@
                         <label class="form-label">年级</label>
                         <select class="form-select" name="grade">
                             {% for g in grade_choices %}
-                            <option value="{{ g }}">{{ g }}年级</option>
+                            <option value="{{ g }}">{% if g == 9 %}其他{% else %}{{ g }}年级{% endif %}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -189,7 +189,7 @@
                                 </td>
                                 <td>{{ member.name }}</td>
                                 <td>
-                                    <span class="badge bg-light text-dark border">{{ member.grade_label }}</span>
+                                    <span class="grade-tag {{ member.grade_class }}">{{ member.grade_label }}</span>
                                 </td>
                                 <td class="text-muted">{{ member.email or '—' }}</td>
                                 <td class="text-nowrap">
@@ -223,7 +223,7 @@
                                     <label class="form-label">年级</label>
                                     <select class="form-select" name="grade">
                                         {% for g in grade_choices %}
-                                        <option value="{{ g }}" {% if member.grade == g %}selected{% endif %}>{{ g }}年级</option>
+                                        <option value="{{ g }}" {% if member.grade == g %}selected{% endif %}>{% if g == 9 %}其他{% else %}{{ g }}年级{% endif %}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -274,7 +274,7 @@
                             <tr>
                                 <td>{{ member.name }}</td>
                                 <td>
-                                    <span class="badge bg-light text-dark border">{{ member.grade_label }}</span>
+                                    <span class="grade-tag {{ member.grade_class }}">{{ member.grade_label }}</span>
                                 </td>
                                 <td class="text-muted">{{ member.email or '—' }}</td>
                                 <td class="text-nowrap">

@@ -7,6 +7,7 @@ from arcp.routes import main_bp, admin_bp
 from arcp.cli import register_cli_commands
 from arcp.scheduler import init_scheduler
 from arcp.bootstrap import ensure_database
+from arcp.services import auto_update_grades
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -34,6 +35,10 @@ def create_app(config_class=Config):
     def inject_globals():
         from datetime import datetime
         return {'current_year_global': datetime.now().year}
+
+    @app.before_request
+    def update_member_grades_if_needed():
+        auto_update_grades()
 
     # 避免在执行 CLI（如 db-init）时启动后台定时任务
     is_cli = len(sys.argv) > 1 and sys.argv[1] in ['db-init', 'change-password']

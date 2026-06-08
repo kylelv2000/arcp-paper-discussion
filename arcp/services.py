@@ -2,7 +2,7 @@
 from datetime import date, timedelta
 from flask import render_template
 from arcp.extensions import db
-from arcp.models import Member, MeetingConfig, Paper, WEEKDAY_LABELS
+from arcp.models import GRADE_MAX, GRADE_OTHER, Member, MeetingConfig, Paper, WEEKDAY_LABELS
 
 SITE_URL = 'https://arcp.kylelv.com'
 
@@ -11,11 +11,16 @@ PLACEHOLDER_TITLE = '待定'
 
 
 def ordered_members():
-    """按自定义排序值返回在册（未归档）成员，用于下拉、排轮与展示。"""
+    """按自定义排序值返回在册（未归档）成员，用于成员展示、通知与报销。"""
     return (Member.query
             .filter_by(archived=False)
             .order_by(Member.order_index, Member.id)
             .all())
+
+
+def schedulable_members():
+    """返回会参与论文讲解排轮的成员，“其他”成员不参与。"""
+    return [member for member in ordered_members() if member.is_schedulable]
 
 
 def archived_members():
@@ -44,6 +49,30 @@ def next_order_index():
     """新成员追加到末尾时使用的排序值。"""
     last = Member.query.order_by(Member.order_index.desc()).first()
     return (last.order_index + 1) if last else 0
+
+
+def auto_update_grades(today=None):
+    """每年 8 月自动给数字年级成员升一级；“其他”成员不受影响。"""
+    today = today or date.today()
+    if today.month != 8:
+        return 0
+
+    members = Member.query.filter_by(archived=False).all()
+    updated = 0
+    for member in members:
+        try:
+            grade = int(member.grade)
+        except (TypeError, ValueError):
+            continue
+        if grade == GRADE_OTHER or member.last_grade_update_year == today.year:
+            continue
+        member.grade = GRADE_OTHER if grade >= GRADE_MAX else grade + 1
+        member.last_grade_update_year = today.year
+        updated += 1
+
+    if updated:
+        db.session.commit()
+    return updated
 
 
 def _next_meeting_on_or_after(d, weekday):
@@ -76,7 +105,7 @@ def schedule_new_round():
 
     返回 (created_count, message)。
     """
-    members = ordered_members()
+    members = schedulable_members()
     if not members:
         return 0, '没有可排期的成员，请先在后台添加成员'
 

@@ -255,10 +255,16 @@ body {
     vertical-align: middle;
 }
 
-.grade-tag {
-    background-color: rgba(44, 109, 208, 0.12);
-    color: var(--brand-dark);
-}
+.grade-tag.grade-0 { background-color: #f4f6f8; color: #506070; }
+.grade-tag.grade-1 { background-color: #edf7ff; color: #1667a8; }
+.grade-tag.grade-2 { background-color: #eaf8f0; color: #187446; }
+.grade-tag.grade-3 { background-color: #f6f2ff; color: #6847a8; }
+.grade-tag.grade-4 { background-color: #fff6e8; color: #9a5d10; }
+.grade-tag.grade-5 { background-color: #eef4ff; color: #315aa5; }
+.grade-tag.grade-6 { background-color: #f2f7e9; color: #5f7b19; }
+.grade-tag.grade-7 { background-color: #fff0f0; color: #9e3a3a; }
+.grade-tag.grade-8 { background-color: #f0eef8; color: #4f4388; }
+.grade-tag.grade-other { background-color: #eef1f6; color: #687384; }
 
 /* 标题单元格 */
 .table td.title-cell {
@@ -396,6 +402,28 @@ body {
     border-radius: 0.65rem;
 }
 
+.reimbursement-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.reimbursement-form-title {
+    font-weight: 700;
+}
+
+.reimbursement-confirmation {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
 .reimbursement-items-table td {
     word-break: break-word;
 }
@@ -422,5 +450,9 @@ footer.bg-light {
     .table td.action-cell .btn-sm {
         font-size: 0.66rem;
         padding: 0.12rem 0.35rem;
+    }
+
+    .reimbursement-form-header {
+        flex-direction: column;
     }
 }
