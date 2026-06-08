@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文讲解提醒</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6fb; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6fb; padding:24px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px; max-width:92%; background-color:#ffffff; border:1px solid #e7ebf2; border-radius:12px; overflow:hidden;">
+
+                    <!-- 头部 -->
+                    <tr>
+                        <td style="background-color:#2c6dd0; background:linear-gradient(120deg,#2c6dd0,#1f55a8); padding:24px 28px;">
+                            <div style="color:#ffffff; font-size:20px; font-weight:700; letter-spacing:0.3px;">论文讲解提醒</div>
+                            <div style="color:rgba(255,255,255,0.85); font-size:13px; margin-top:4px;">ARCP 论文讨论班</div>
+                        </td>
+                    </tr>
+
+                    <!-- 下次讲解高亮 -->
+                    <tr>
+                        <td style="padding:28px 28px 8px 28px;">
+                            <div style="font-size:13px; color:#6b7785; margin-bottom:10px;">下次讲解安排</div>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f6ff; border:1px solid #d6e6ff; border-radius:10px;">
+                                <tr>
+                                    <td style="padding:18px 20px;">
+                                        <div style="font-size:24px; font-weight:700; color:#1f55a8;">{{ main.date }}</div>
+                                        <div style="font-size:13px; color:#6b7785; margin-top:2px;">{{ main.weekday }}</div>
+                                        <div style="margin-top:14px; font-size:15px; color:#1f2733;">
+                                            <span style="display:inline-block; background-color:#2c6dd0; color:#ffffff; font-size:12px; font-weight:600; padding:3px 10px; border-radius:20px;">讲解人</span>
+                                            <span style="margin-left:8px; font-weight:600;">{{ main.presenter }}</span>
+                                        </div>
+                                        <div style="margin-top:10px; font-size:15px; color:#1f2733; line-height:1.5;">
+                                            <span style="display:inline-block; background-color:#eef1f6; color:#6b7785; font-size:12px; font-weight:600; padding:3px 10px; border-radius:20px;">论文</span>
+                                            <span style="margin-left:8px;">{{ main.title }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    {% if upcoming %}
+                    <!-- 后续安排 -->
+                    <tr>
+                        <td style="padding:18px 28px 4px 28px;">
+                            <div style="font-size:13px; color:#6b7785; margin-bottom:10px;">后续安排</div>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                                {% for item in upcoming %}
+                                <tr>
+                                    <td style="padding:10px 0; border-bottom:1px solid #eef1f6; width:96px; vertical-align:top;">
+                                        <div style="font-size:14px; font-weight:600; color:#1f2733;">{{ item.date }}</div>
+                                        <div style="font-size:12px; color:#9aa3ad;">{{ item.weekday }}</div>
+                                    </td>
+                                    <td style="padding:10px 0 10px 12px; border-bottom:1px solid #eef1f6; vertical-align:top;">
+                                        <div style="font-size:14px; color:#1f2733;"><strong>{{ item.presenter }}</strong></div>
+                                        <div style="font-size:13px; color:#6b7785; margin-top:2px;">{{ item.title }}</div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- 页脚 -->
+                    <tr>
+                        <td style="padding:22px 28px 26px 28px;">
+                            <div style="font-size:13px; color:#9aa3ad; line-height:1.6;">
+                                请访问讨论班网站查看和编辑具体安排。<br>
+                                本邮件由系统自动发送，请勿直接回复。
+                            </div>
+                        </td>
+                    </tr>
+
+                </table>
+                <div style="color:#b3bac4; font-size:12px; margin-top:16px;">© ARCP 论文讨论班</div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

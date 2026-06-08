@@ -6,7 +6,7 @@ from arcp.extensions import db, mail
 from arcp.models import User, Paper, EmailConfig, Member, MeetingConfig, WEEKDAY_LABELS
 from arcp.services import (
     ordered_members, archived_members, reset_member_order, next_order_index,
-    notification_emails, schedule_new_round,
+    notification_emails, schedule_new_round, build_notification_content,
 )
 
 admin_bp = Blueprint('admin', __name__)
@@ -271,44 +271,28 @@ def send_notification_now():
         flash('没有找到未来的论文讲解安排', 'warning')
         return redirect(url_for('admin.admin_dashboard'))
     
-    # 获取后续3次的安排
-    future_papers = Paper.query.filter(Paper.date > upcoming_paper.date).order_by(Paper.date).limit(3).all()
-    
-    # 准备邮件内容
-    subject = f"论文讲解提醒: {upcoming_paper.date.strftime('%Y/%m/%d')}"
     recipients = notification_emails()
-
     if not recipients:
         flash('没有收件人，请先在成员管理中为成员填写邮箱', 'warning')
         return redirect(url_for('admin.admin_dashboard'))
-    
-    body = f"""
-提醒：下次论文讲解安排
 
-时间：{upcoming_paper.date.strftime('%Y/%m/%d')}
-讲解人：{upcoming_paper.presenter}
-论文名称：{upcoming_paper.title}
+    # 获取后续3次的安排，准备 HTML + 纯文本内容
+    future_papers = Paper.query.filter(Paper.date > upcoming_paper.date).order_by(Paper.date).limit(3).all()
+    subject, text_body, html_body = build_notification_content(upcoming_paper, future_papers)
 
-未来安排：
-"""
-    
-    for paper in future_papers:
-        body += f"\n{paper.date.strftime('%Y/%m/%d')} - {paper.presenter} - {paper.title}"
-    
-    body += "\n\n请访问我们的网站 查看和编辑具体安排。"
-    
     try:
         msg = Message(
-            subject=subject, 
-            recipients=recipients, 
-            body=body,
+            subject=subject,
+            recipients=recipients,
+            body=text_body,
+            html=html_body,
             sender=('ARCP讨论班', current_app.config['MAIL_DEFAULT_SENDER'])
         )
         mail.send(msg)
         flash('通知邮件已成功发送', 'success')
     except Exception as e:
         flash(f'邮件发送失败: {str(e)}', 'danger')
-    
+
     return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/paper/delete/<int:id>')

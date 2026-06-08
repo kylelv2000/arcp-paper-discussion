@@ -1,7 +1,8 @@
 """讨论班排期相关的业务逻辑。"""
 from datetime import date, timedelta
+from flask import render_template
 from arcp.extensions import db
-from arcp.models import Member, MeetingConfig, Paper
+from arcp.models import Member, MeetingConfig, Paper, WEEKDAY_LABELS
 
 # 安排新轮时，新建论文的占位标题
 PLACEHOLDER_TITLE = '待定'
@@ -86,3 +87,41 @@ def notification_emails():
         Member.email.isnot(None),
         Member.email != '',
     ).all()]
+
+
+def _format_paper(paper):
+    """将 Paper 整理为邮件模板使用的简单结构。"""
+    return {
+        'date': paper.date.strftime('%Y/%m/%d'),
+        'weekday': WEEKDAY_LABELS[paper.date.weekday()],
+        'presenter': paper.presenter,
+        'title': paper.title,
+    }
+
+
+def build_notification_content(paper, future_papers):
+    """构建通知邮件的主题、纯文本与 HTML 内容。
+
+    返回 (subject, text_body, html_body)，纯文本作为不支持 HTML 时的兜底。
+    """
+    main = _format_paper(paper)
+    upcoming = [_format_paper(p) for p in future_papers]
+
+    subject = f"论文讲解提醒：{main['date']}（{main['presenter']}）"
+
+    lines = [
+        '提醒：下次论文讲解安排', '',
+        f"时间：{main['date']}（{main['weekday']}）",
+        f"讲解人：{main['presenter']}",
+        f"论文名称：{main['title']}", '',
+    ]
+    if upcoming:
+        lines.append('后续安排：')
+        for item in upcoming:
+            lines.append(f"  {item['date']}（{item['weekday']}） - {item['presenter']} - {item['title']}")
+        lines.append('')
+    lines.append('请访问讨论班网站查看和编辑具体安排。')
+    text_body = '\n'.join(lines)
+
+    html_body = render_template('email/notification.html', main=main, upcoming=upcoming)
+    return subject, text_body, html_body

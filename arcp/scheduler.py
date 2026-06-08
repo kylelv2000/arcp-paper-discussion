@@ -4,7 +4,7 @@ from flask_mail import Message
 from apscheduler.schedulers.background import BackgroundScheduler
 from arcp.extensions import db, mail
 from arcp.models import EmailConfig, Paper, SentNotification
-from arcp.services import notification_emails
+from arcp.services import notification_emails, build_notification_content
 
 def send_notification(app):
     """检查并发送邮件通知"""
@@ -50,29 +50,16 @@ def send_notification(app):
         
         # 获取后续3次的安排
         future_papers = Paper.query.filter(Paper.date > paper.date).order_by(Paper.date).limit(3).all()
-        
-        # 准备邮件内容
-        subject = f"论文讲解提醒: {paper.date.strftime('%Y/%m/%d')}"
-        body = f"""
-提醒：下次论文讲解安排
 
-时间：{paper.date.strftime('%Y/%m/%d')}
-讲解人：{paper.presenter}
-论文名称：{paper.title}
+        # 准备邮件内容（HTML + 纯文本兜底）
+        subject, text_body, html_body = build_notification_content(paper, future_papers)
 
-未来安排：
-"""
-        
-        for p in future_papers:
-            body += f"\n{p.date.strftime('%Y/%m/%d')} - {p.presenter} - {p.title}"
-        
-        body += f"\n\n请访问我们的网站 查看和编辑具体安排。"
-        
         try:
             msg = Message(
-                subject=subject, 
-                recipients=recipients, 
-                body=body,
+                subject=subject,
+                recipients=recipients,
+                body=text_body,
+                html=html_body,
                 sender=('ARCP讨论班', app.config['MAIL_DEFAULT_SENDER'])
             )
             mail.send(msg)
