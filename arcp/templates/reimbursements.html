@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}报销安排 - ARCP论文讨论班{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2>报销安排</h2>
+        <div class="btn-group">
+            <a href="{{ url_for('main.reimbursements', year=year - 1) }}" class="btn btn-sm btn-outline-primary">{{ year - 1 }}</a>
+            <a href="{{ url_for('main.reimbursements') }}" class="btn btn-sm btn-outline-secondary">今年</a>
+            <a href="{{ url_for('main.reimbursements', year=year + 1) }}" class="btn btn-sm btn-outline-primary">{{ year + 1 }}</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="reimbursement-year">
+            {{ year }} 年
+            <span class="badge bg-light text-dark border ms-2">当前季度：{{ current_reimbursement_year }} Q{{ current_reimbursement_quarter }}</span>
+        </div>
+        <div class="row g-3">
+            {% for quarter in quarters %}
+            <div class="col-md-6 col-xl-3">
+                <div class="quarter-card {% if quarter.is_current %}current-quarter{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="quarter-label">{{ quarter.label }}</div>
+                            <div class="quarter-range">{{ quarter.date_range }}</div>
+                        </div>
+                        {% if quarter.is_current %}
+                        <span class="badge bg-success">当前</span>
+                        {% endif %}
+                    </div>
+                    <div class="quarter-owner">
+                        <span class="text-muted">负责人</span>
+                        <strong>{{ quarter.student or '待安排' }}</strong>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% for quarter in quarters %}
+        <div class="reimbursement-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>{{ quarter.label }} 报销事项</h3>
+                {% if quarter.is_current %}
+                <span class="badge bg-success">可添加和修改</span>
+                {% else %}
+                <span class="badge bg-light text-dark border">仅查看</span>
+                {% endif %}
+            </div>
+
+            {% if quarter.is_current %}
+            <form method="post" action="{{ url_for('main.add_reimbursement_item') }}" enctype="multipart/form-data" class="row g-3 align-items-end reimbursement-form">
+                <div class="col-md-3">
+                    <label class="form-label">用户</label>
+                    <select class="form-select" name="member_name" required>
+                        <option value="" selected disabled>请选择用户</option>
+                        {% for member in members %}
+                        <option value="{{ member.name }}">{{ member.name }}（{{ member.grade_label }}）</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">报销内容</label>
+                    <input type="text" class="form-control" name="content" maxlength="500" placeholder="最多 50 词" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">ZIP 文件</label>
+                    <input type="file" class="form-control" name="zip_file" accept=".zip,application/zip" required>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+            {% endif %}
+
+            {% if quarter.reimbursement_items %}
+            <div class="table-responsive mt-3">
+                <table class="table table-hover align-middle reimbursement-items-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">用户</th>
+                            <th>报销内容</th>
+                            <th class="text-center" style="width: 120px;">文件</th>
+                            <th class="text-center" style="width: 160px;">更新时间</th>
+                            {% if quarter.is_current %}
+                            <th class="text-center" style="width: 150px;">操作</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in quarter.reimbursement_items %}
+                        <tr>
+                            <td class="fw-semibold">{{ item.member_name }}</td>
+                            <td>{{ item.content }}</td>
+                            <td class="text-center">
+                                <a href="{{ url_for('main.download_reimbursement_zip', id=item.id) }}" class="btn btn-sm btn-outline-primary">下载</a>
+                            </td>
+                            <td class="text-muted text-center">{{ item.updated_at.strftime('%Y-%m-%d') }}</td>
+                            {% if quarter.is_current %}
+                            <td class="text-nowrap action-cell text-center">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                                        data-bs-toggle="modal" data-bs-target="#editReimbursement{{ item.id }}">修改</button>
+                                <form method="post" action="{{ url_for('main.delete_reimbursement_item', id=item.id) }}" class="d-inline"
+                                      onsubmit="return confirm('确定删除 {{ item.member_name }} 的报销事项吗？')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
+                                </form>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mb-0 mt-3">当前没有报销事项。</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        {% for quarter in quarters if quarter.is_current %}
+            {% for item in quarter.reimbursement_items %}
+            <div class="modal fade" id="editReimbursement{{ item.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <form method="post" action="{{ url_for('main.edit_reimbursement_item', id=item.id) }}" enctype="multipart/form-data" class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">修改报销事项</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">用户</label>
+                                <input type="text" class="form-control" value="{{ item.member_name }}" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">报销内容</label>
+                                <input type="text" class="form-control" name="content" value="{{ item.content }}" maxlength="500" required>
+                                <div class="form-text">最多 50 词。</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">替换 ZIP 文件</label>
+                                <input type="file" class="form-control" name="zip_file" accept=".zip,application/zip">
+                                <div class="form-text">留空则保留当前 ZIP，最大 100MB。</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

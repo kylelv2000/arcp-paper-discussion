@@ -322,6 +322,84 @@ body {
     font-weight: 600;
 }
 
+/* 报销安排 */
+.reimbursement-year {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--muted);
+}
+
+.quarter-card {
+    min-height: 150px;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    padding: 1rem;
+    background-color: #fff;
+    box-shadow: var(--shadow-sm);
+}
+
+.quarter-card.current-quarter {
+    border-color: rgba(46, 158, 91, 0.35);
+    box-shadow: inset 3px 0 0 var(--success), var(--shadow-sm);
+}
+
+.quarter-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    height: 32px;
+    border-radius: 1rem;
+    background-color: var(--brand-soft);
+    color: var(--brand-dark);
+    font-weight: 700;
+}
+
+.quarter-range {
+    margin-top: 0.8rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.quarter-owner {
+    margin-top: 0.8rem;
+}
+
+.quarter-owner span,
+.quarter-owner strong {
+    display: block;
+}
+
+.quarter-owner strong {
+    margin-top: 0.2rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.reimbursement-section {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+.reimbursement-section h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.reimbursement-form {
+    padding: 1rem;
+    background-color: #fafbfc;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+}
+
+.reimbursement-items-table td {
+    word-break: break-word;
+}
+
 /* 页脚 */
 footer.bg-light {
     background-color: #fff !important;

@@ -98,6 +98,47 @@
     <div class="col-12 mb-4">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
+                <h2>报销负责人</h2>
+                <div class="btn-group">
+                    <a href="{{ url_for('admin.admin_dashboard', reimbursement_year=reimbursement_year - 1) }}" class="btn btn-sm btn-outline-primary">{{ reimbursement_year - 1 }}</a>
+                    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-sm btn-outline-secondary">今年</a>
+                    <a href="{{ url_for('admin.admin_dashboard', reimbursement_year=reimbursement_year + 1) }}" class="btn btn-sm btn-outline-primary">{{ reimbursement_year + 1 }}</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('admin.update_reimbursements') }}" class="row g-3 align-items-end">
+                    <input type="hidden" name="year" value="{{ reimbursement_year }}">
+                    {% for quarter in reimbursement_quarters %}
+                    <div class="col-md-6 col-xl-3">
+                        <label class="form-label">{{ reimbursement_year }} {{ quarter.label }} 负责人</label>
+                        {% set current = quarter.student %}
+                        {% set member_names = members | map(attribute='name') | list %}
+                        <select class="form-select" name="q{{ quarter.number }}">
+                            <option value="" {% if not current %}selected{% endif %}>待安排</option>
+                            {% for member in members %}
+                            <option value="{{ member.name }}" {% if member.name == current %}selected{% endif %}>{{ member.name }}（{{ member.grade_label }}）</option>
+                            {% endfor %}
+                            {% if current and current not in member_names %}
+                            <option value="{{ current }}" selected>{{ current }}（已移除成员）</option>
+                            {% endif %}
+                        </select>
+                        <div class="form-text">{{ quarter.date_range }}</div>
+                    </div>
+                    {% endfor %}
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">保存报销负责人</button>
+                        <a href="{{ url_for('main.reimbursements', year=reimbursement_year) }}" class="btn btn-outline-secondary ms-2">查看报销安排</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h2>成员管理</h2>
                 <a href="{{ url_for('admin.reset_member_order_route') }}" class="btn btn-sm btn-outline-secondary"
                    onclick="return confirm('确定按年级（高年级优先）与姓名字典序重置排序吗？')">按年级重置排序</a>

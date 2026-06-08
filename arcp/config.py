@@ -17,6 +17,10 @@ else:
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'default_secret_key')
+    MAX_PDF_UPLOAD_SIZE = 20 * 1024 * 1024
+    MAX_REIMBURSEMENT_UPLOAD_SIZE = 100 * 1024 * 1024
+    PAPER_UPLOAD_FOLDER = os.path.join(instance_path, 'uploads', 'papers')
+    REIMBURSEMENT_UPLOAD_FOLDER = os.path.join(instance_path, 'uploads', 'reimbursements')
     
     # 数据库配置：本地与 Docker 统一存放于 instance 目录
     db_url = os.environ.get('DATABASE_URL')

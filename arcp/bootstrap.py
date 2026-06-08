@@ -3,6 +3,7 @@
 项目未使用 Alembic，新增的表通过 ``db.create_all()`` 自动补齐；
 对于历史部署，将已有讲解人/收件人迁移为成员，保证下拉与通知可用。
 """
+import os
 from sqlalchemy import text, inspect
 from arcp.extensions import db
 from arcp.models import Member, MeetingConfig, EmailRecipient, Paper
@@ -10,6 +11,9 @@ from arcp.models import Member, MeetingConfig, EmailRecipient, Paper
 
 def ensure_database(app):
     with app.app_context():
+        os.makedirs(app.config['PAPER_UPLOAD_FOLDER'], exist_ok=True)
+        os.makedirs(app.config['REIMBURSEMENT_UPLOAD_FOLDER'], exist_ok=True)
+
         # 仅创建缺失的表，不会改动已存在的表
         db.create_all()
 
@@ -30,7 +34,8 @@ def ensure_database(app):
 def _ensure_columns():
     """针对 SQLite 的轻量列迁移：缺失则 ALTER TABLE 补齐。"""
     inspector = inspect(db.engine)
-    if 'member' not in inspector.get_table_names():
+    tables = inspector.get_table_names()
+    if 'member' not in tables:
         return
     columns = {col['name'] for col in inspector.get_columns('member')}
     if 'archived' not in columns:
@@ -45,6 +50,14 @@ def _ensure_columns():
     # 其余非 1~8 的非法值统一回落为 1 年级
     db.session.execute(text("UPDATE member SET grade='1' WHERE grade NOT GLOB '[1-8]'"))
     db.session.commit()
+
+    if 'paper' in tables:
+        paper_columns = {col['name'] for col in inspector.get_columns('paper')}
+        if 'pdf_filename' not in paper_columns:
+            db.session.execute(text('ALTER TABLE paper ADD COLUMN pdf_filename VARCHAR(255)'))
+        if 'pdf_original_filename' not in paper_columns:
+            db.session.execute(text('ALTER TABLE paper ADD COLUMN pdf_original_filename VARCHAR(255)'))
+        db.session.commit()
 
 
 def _seed_members_from_history():

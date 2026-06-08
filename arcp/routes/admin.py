@@ -1,9 +1,13 @@
+import os
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, current_app
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_mail import Message
 from arcp.extensions import db, mail
-from arcp.models import User, Paper, EmailConfig, Member, MeetingConfig, WEEKDAY_LABELS, GRADE_CHOICES, GRADE_MIN, GRADE_MAX
+from arcp.models import (
+    User, Paper, EmailConfig, Member, MeetingConfig, ReimbursementAssignment,
+    WEEKDAY_LABELS, GRADE_CHOICES, GRADE_MIN, GRADE_MAX,
+)
 from arcp.services import (
     ordered_members, archived_members, reset_member_order, next_order_index,
     notification_emails, schedule_new_round, build_notification_content,
@@ -83,6 +87,10 @@ def admin_dashboard():
     if not current_user.is_admin:
         flash('无权限访问此页面', 'danger')
         return redirect(url_for('main.index'))
+    try:
+        reimbursement_year = int(request.args.get('reimbursement_year', datetime.now().year))
+    except (TypeError, ValueError):
+        reimbursement_year = datetime.now().year
         
     email_config = EmailConfig.query.first()
     if not email_config:
@@ -98,6 +106,24 @@ def admin_dashboard():
 
     members = ordered_members()
     archived = archived_members()
+    reimbursement_assignments = {
+        item.quarter: item.student
+        for item in ReimbursementAssignment.query.filter_by(year=reimbursement_year).all()
+    }
+    reimbursement_quarters = [
+        {
+            'number': quarter,
+            'label': f'Q{quarter}',
+            'date_range': {
+                1: '1月 - 3月',
+                2: '4月 - 6月',
+                3: '7月 - 9月',
+                4: '10月 - 12月',
+            }[quarter],
+            'student': reimbursement_assignments.get(quarter, ''),
+        }
+        for quarter in range(1, 5)
+    ]
     return render_template(
         'admin_dashboard.html',
         email_config=email_config,
@@ -106,6 +132,8 @@ def admin_dashboard():
         meeting_config=meeting_config,
         weekday_labels=WEEKDAY_LABELS,
         grade_choices=GRADE_CHOICES,
+        reimbursement_year=reimbursement_year,
+        reimbursement_quarters=reimbursement_quarters,
     )
 
 @admin_bp.route('/admin/meeting_config', methods=['POST'])
@@ -128,6 +156,33 @@ def update_meeting_config():
     db.session.commit()
     flash('每周开会日已更新', 'success')
     return redirect(url_for('admin.admin_dashboard'))
+
+
+@admin_bp.route('/admin/reimbursements', methods=['POST'])
+@login_required
+def update_reimbursements():
+    if not current_user.is_admin:
+        return jsonify({'status': 'error', 'message': '无权限'}), 403
+
+    try:
+        year = int(request.form.get('year'))
+    except (TypeError, ValueError):
+        flash('年份不正确', 'warning')
+        return redirect(url_for('main.reimbursements'))
+
+    for quarter in range(1, 5):
+        student = request.form.get(f'q{quarter}', '').strip() or None
+        assignment = ReimbursementAssignment.query.filter_by(
+            year=year, quarter=quarter
+        ).first()
+        if not assignment:
+            assignment = ReimbursementAssignment(year=year, quarter=quarter)
+            db.session.add(assignment)
+        assignment.student = student
+
+    db.session.commit()
+    flash(f'{year} 年报销负责人已更新', 'success')
+    return redirect(url_for('admin.admin_dashboard', reimbursement_year=year))
 
 @admin_bp.route('/admin/email_config', methods=['POST'])
 @login_required
@@ -311,6 +366,10 @@ def delete_paper(id):
         return redirect(url_for('main.index'))
         
     paper = Paper.query.get_or_404(id)
+    if paper.pdf_filename:
+        pdf_path = os.path.join(current_app.config['PAPER_UPLOAD_FOLDER'], paper.pdf_filename)
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
     db.session.delete(paper)
     db.session.commit()
     flash('论文安排已删除', 'success')
