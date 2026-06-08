@@ -133,7 +133,7 @@
                                 <th>姓名</th>
                                 <th style="width: 90px;">年级</th>
                                 <th>邮箱</th>
-                                <th style="width: 200px;">操作</th>
+                                <th style="width: 230px;">操作</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -150,10 +150,10 @@
                                     <span class="badge {% if member.grade == 'phd' %}bg-primary{% else %}bg-info text-dark{% endif %}">{{ member.grade_label }}</span>
                                 </td>
                                 <td class="text-muted">{{ member.email or '—' }}</td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                <td class="text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-1"
                                             data-bs-toggle="modal" data-bs-target="#editMember{{ member.id }}">编辑</button>
-                                    <a href="{{ url_for('admin.archive_member', id=member.id) }}" class="btn btn-sm btn-outline-secondary"
+                                    <a href="{{ url_for('admin.archive_member', id=member.id) }}" class="btn btn-sm btn-outline-secondary me-1"
                                        onclick="return confirm('确定归档成员 {{ member.name }} 吗？归档后将不参与排轮与通知。')">归档</a>
                                     <a href="{{ url_for('admin.delete_member', id=member.id) }}" class="btn btn-sm btn-outline-danger"
                                        onclick="return confirm('确定删除成员 {{ member.name }} 吗？')">删除</a>
@@ -234,8 +234,8 @@
                                     <span class="badge {% if member.grade == 'phd' %}bg-primary{% else %}bg-info text-dark{% endif %}">{{ member.grade_label }}</span>
                                 </td>
                                 <td class="text-muted">{{ member.email or '—' }}</td>
-                                <td>
-                                    <a href="{{ url_for('admin.unarchive_member', id=member.id) }}" class="btn btn-sm btn-outline-success">恢复</a>
+                                <td class="text-nowrap">
+                                    <a href="{{ url_for('admin.unarchive_member', id=member.id) }}" class="btn btn-sm btn-outline-success me-1">恢复</a>
                                     <a href="{{ url_for('admin.delete_member', id=member.id) }}" class="btn btn-sm btn-outline-danger"
                                        onclick="return confirm('确定彻底删除成员 {{ member.name }} 吗？')">删除</a>
                                 </td>

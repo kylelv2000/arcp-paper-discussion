@@ -111,7 +111,7 @@ def _format_paper(paper):
         'date': paper.date.strftime('%Y/%m/%d'),
         'weekday': WEEKDAY_LABELS[paper.date.weekday()],
         'presenter': paper.presenter,
-        'title': paper.title,
+        'title': paper.title or '待定',
     }
 
 

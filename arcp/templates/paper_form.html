@@ -31,7 +31,8 @@
             </div>
             <div class="mb-3">
                 <label for="title" class="form-label">论文名称</label>
-                <input type="text" class="form-control" id="title" name="title" value="{{ paper.title if paper else '' }}" required>
+                <input type="text" class="form-control" id="title" name="title" value="{{ paper.title if paper else '' }}" placeholder="可留空，由讲解人后续补充">
+                <div class="form-text">论文名称可暂时留空，讲解人确定后再编辑补充。</div>
             </div>
             <div class="d-flex justify-content-between">
                 <a href="{{ url_for('main.index') }}" class="btn btn-secondary">返回</a>

@@ -36,8 +36,8 @@ def add_paper():
     if request.method == 'POST':
         date_str = request.form['date']
         presenter = request.form['presenter']
-        title = request.form['title']
-        
+        title = request.form.get('title', '').strip()
+
         try:
             date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
             new_paper = Paper(date=date_obj, presenter=presenter, title=title)
@@ -64,7 +64,7 @@ def edit_paper(id):
             date_str = request.form['date']
             paper.date = datetime.strptime(date_str, '%Y-%m-%d').date()
             paper.presenter = request.form['presenter']
-            paper.title = request.form['title']
+            paper.title = request.form.get('title', '').strip()
             paper.updated_at = datetime.utcnow()
             db.session.commit()
             flash('论文安排已更新', 'success')

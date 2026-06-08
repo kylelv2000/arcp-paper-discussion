@@ -72,7 +72,7 @@
                             {% endif %}
                         </td>
                         <td class="title-cell">
-                            {% if paper.title == '待定' %}
+                            {% if not paper.title or paper.title == '待定' %}
                             <span class="title-placeholder">待定</span>
                             {% else %}
                             {{ paper.title }}
