@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}管理后台 - ARCP论文讨论班{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h2>修改管理员密码</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('admin.change_admin_password_web') }}" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="current_password" class="form-label">当前密码</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="new_password" class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+                        <div class="form-text">密码长度必须至少为8个字符</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="confirm_password" class="form-label">确认新密码</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">修改密码</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>邮件通知设置</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('admin.update_email_config') }}">
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="enabled" name="enabled" {% if email_config.enabled %}checked{% endif %}>
+                        <label class="form-check-label" for="enabled">启用邮件通知</label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="days_before" class="form-label">提前几天通知</label>
+                        <select class="form-select" id="days_before" name="days_before">
+                            {% for i in range(0, 7) %}
+                            <option value="{{ i }}" {% if email_config.days_before == i %}selected{% endif %}>{{ i }} 天</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notification_time" class="form-label">通知时间</label>
+                        <input type="time" class="form-control" id="notification_time" name="notification_time" value="{{ email_config.notification_time.strftime('%H:%M') }}" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">保存设置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2>讨论班开会日</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('admin.update_meeting_config') }}">
+                    <div class="mb-3">
+                        <label for="weekday" class="form-label">每周开会日</label>
+                        <select class="form-select" id="weekday" name="weekday">
+                            {% for i in range(0, 7) %}
+                            <option value="{{ i }}" {% if meeting_config.weekday == i %}selected{% endif %}>{{ weekday_labels[i] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">「安排新轮」将依据此开会日，为每位成员按周排定讲解日期。</div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">保存开会日</button>
+                    </div>
+                </form>
+                <hr>
+                <div class="alert alert-info mb-0">
+                    通知邮件将发送给<strong>所有填写了邮箱的成员</strong>，讲解人与收件人已统一在下方「成员管理」中维护。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2>报销负责人</h2>
+                <div class="btn-group">
+                    <a href="{{ url_for('admin.admin_dashboard', reimbursement_year=reimbursement_year - 1) }}" class="btn btn-sm btn-outline-primary">{{ reimbursement_year - 1 }}</a>
+                    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-sm btn-outline-secondary">今年</a>
+                    <a href="{{ url_for('admin.admin_dashboard', reimbursement_year=reimbursement_year + 1) }}" class="btn btn-sm btn-outline-primary">{{ reimbursement_year + 1 }}</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('admin.update_reimbursements') }}" class="row g-3 align-items-end">
+                    <input type="hidden" name="year" value="{{ reimbursement_year }}">
+                    {% for quarter in reimbursement_quarters %}
+                    <div class="col-md-6 col-xl-3">
+                        <label class="form-label">{{ reimbursement_year }} {{ quarter.label }} 负责人</label>
+                        {% set current = quarter.student %}
+                        {% set member_names = members | map(attribute='name') | list %}
+                        <select class="form-select" name="q{{ quarter.number }}">
+                            <option value="" {% if not current %}selected{% endif %}>待安排</option>
+                            {% for member in members %}
+                            <option value="{{ member.name }}" {% if member.name == current %}selected{% endif %}>{{ member.name }}（{{ member.grade_label }}）</option>
+                            {% endfor %}
+                            {% if current and current not in member_names %}
+                            <option value="{{ current }}" selected>{{ current }}（已移除成员）</option>
+                            {% endif %}
+                        </select>
+                        <div class="form-text">{{ quarter.date_range }}</div>
+                    </div>
+                    {% endfor %}
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">保存报销负责人</button>
+                        <a href="{{ url_for('main.reimbursements', year=reimbursement_year) }}" class="btn btn-outline-secondary ms-2">查看报销安排</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2>成员管理</h2>
+                <a href="{{ url_for('admin.reset_member_order_route') }}" class="btn btn-sm btn-outline-secondary"
+                   onclick="return confirm('确定按年级（高年级优先）与姓名字典序重置排序吗？')">按年级重置排序</a>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('admin.add_member') }}" class="row g-2 align-items-end mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label">姓名</label>
+                        <input type="text" class="form-control" name="name" placeholder="讲解人姓名" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">年级</label>
+                        <select class="form-select" name="grade">
+                            {% for g in grade_choices %}
+                            <option value="{{ g }}">{{ g }}年级</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">邮箱（选填）</label>
+                        <input type="email" class="form-control" name="email" placeholder="用于接收通知">
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button type="submit" class="btn btn-primary">添加成员</button>
+                    </div>
+                </form>
+
+                {% if members %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 90px;">排序</th>
+                                <th>姓名</th>
+                                <th style="width: 90px;">年级</th>
+                                <th>邮箱</th>
+                                <th style="width: 230px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in members %}
+                            <tr>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('admin.move_member', id=member.id, direction='up') }}" class="btn btn-outline-secondary {% if loop.first %}disabled{% endif %}" title="上移">↑</a>
+                                        <a href="{{ url_for('admin.move_member', id=member.id, direction='down') }}" class="btn btn-outline-secondary {% if loop.last %}disabled{% endif %}" title="下移">↓</a>
+                                    </div>
+                                </td>
+                                <td>{{ member.name }}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">{{ member.grade_label }}</span>
+                                </td>
+                                <td class="text-muted">{{ member.email or '—' }}</td>
+                                <td class="text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                                            data-bs-toggle="modal" data-bs-target="#editMember{{ member.id }}">编辑</button>
+                                    <a href="{{ url_for('admin.archive_member', id=member.id) }}" class="btn btn-sm btn-outline-secondary me-1"
+                                       onclick="return confirm('确定归档成员 {{ member.name }} 吗？归档后将不参与排轮与通知。')">归档</a>
+                                    <a href="{{ url_for('admin.delete_member', id=member.id) }}" class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('确定删除成员 {{ member.name }} 吗？')">删除</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% for member in members %}
+                <div class="modal fade" id="editMember{{ member.id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form method="post" action="{{ url_for('admin.edit_member', id=member.id) }}" class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">编辑成员</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">姓名</label>
+                                    <input type="text" class="form-control" name="name" value="{{ member.name }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">年级</label>
+                                    <select class="form-select" name="grade">
+                                        {% for g in grade_choices %}
+                                        <option value="{{ g }}" {% if member.grade == g %}selected{% endif %}>{{ g }}年级</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">邮箱</label>
+                                    <input type="email" class="form-control" name="email" value="{{ member.email or '' }}">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="submit" class="btn btn-primary">保存</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    目前没有成员，请添加成员。成员即讲解人，可在首页排期中被选择。
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if archived_members %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h2>已归档成员 <span class="badge bg-secondary">{{ archived_members|length }}</span></h2>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">已归档（毕业）成员不参与讲解人下拉、安排新轮与邮件通知，历史安排记录仍保留。</p>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>姓名</th>
+                                <th style="width: 90px;">年级</th>
+                                <th>邮箱</th>
+                                <th style="width: 160px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in archived_members %}
+                            <tr>
+                                <td>{{ member.name }}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">{{ member.grade_label }}</span>
+                                </td>
+                                <td class="text-muted">{{ member.email or '—' }}</td>
+                                <td class="text-nowrap">
+                                    <a href="{{ url_for('admin.unarchive_member', id=member.id) }}" class="btn btn-sm btn-outline-success me-1">恢复</a>
+                                    <a href="{{ url_for('admin.delete_member', id=member.id) }}" class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('确定彻底删除成员 {{ member.name }} 吗？')">删除</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2>当前论文安排</h2>
+                <div>
+                    <a href="{{ url_for('admin.send_notification_now') }}" class="btn btn-success me-2" onclick="return confirm('确定要立即发送通知邮件吗？')">立即发送通知</a>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary">查看和管理安排</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <p>系统每小时检查一次，并根据设置的时间自动发送通知。通知内容将包括最近一次讲解安排及后续3次安排。</p>
+                    <p>确保邮件服务器设置正确，并至少为一位成员填写邮箱以接收通知。</p>
+                    <p>您也可以使用"立即发送通知"按钮手动触发邮件发送。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,426 @@
+/* ============================================================
+   ARCP 论文讨论班 - 全站样式
+   主题变量 + 卡片/表格/安排表 item 视觉重构
+   ============================================================ */
+
+:root {
+    --brand: #2c6dd0;
+    --brand-dark: #1f55a8;
+    --brand-soft: rgba(44, 109, 208, 0.08);
+    --success: #2e9e5b;
+    --bg: #f4f6fb;
+    --card-bg: #ffffff;
+    --text: #1f2733;
+    --muted: #6b7785;
+    --border: #e7ebf2;
+    --radius: 0.75rem;
+    --shadow-sm: 0 1px 3px rgba(20, 35, 60, 0.06);
+    --shadow-md: 0 6px 20px rgba(20, 35, 60, 0.08);
+}
+
+/* 全局 */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+.container {
+    flex: 1;
+}
+
+/* 导航栏 */
+.navbar.bg-primary {
+    background: linear-gradient(120deg, var(--brand), var(--brand-dark)) !important;
+    box-shadow: var(--shadow-sm);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.navbar .nav-link {
+    border-radius: 0.4rem;
+    transition: background-color 0.2s ease;
+}
+
+.navbar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* 卡片 */
+.card {
+    background-color: var(--card-bg);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+}
+
+.card-header h2 {
+    margin-bottom: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* 表单 */
+.form-control:focus,
+.form-select:focus {
+    border-color: #9bbcf0;
+    box-shadow: 0 0 0 0.2rem var(--brand-soft);
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+/* 按钮 */
+.btn {
+    border-radius: 0.5rem;
+    padding: 0.4rem 1rem;
+    font-weight: 500;
+    transition: transform 0.12s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--brand);
+    border-color: var(--brand);
+}
+
+.btn-primary:hover {
+    background-color: var(--brand-dark);
+    border-color: var(--brand-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* 提示动画 */
+.alert {
+    animation: fadeIn 0.4s ease;
+    border: none;
+    border-radius: 0.6rem;
+    box-shadow: var(--shadow-sm);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   安排表
+   ============================================================ */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: none;
+    color: var(--muted);
+    border-top: none;
+    border-bottom: 2px solid var(--border);
+    padding: 0.65rem 0.75rem;
+}
+
+.table td {
+    vertical-align: middle;
+    border-color: var(--border);
+}
+
+#papers-table tbody tr {
+    transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+#papers-table tbody tr:hover {
+    background-color: var(--brand-soft);
+}
+
+/* 近期安排：左侧强调条 + 浅绿底 */
+.upcoming-row {
+    background-color: rgba(46, 158, 91, 0.06) !important;
+    box-shadow: inset 3px 0 0 var(--success);
+}
+
+.upcoming-row:hover {
+    background-color: rgba(46, 158, 91, 0.12) !important;
+}
+
+/* 过期安排：弱化 */
+.expired-row {
+    color: #9aa3ad;
+    background-color: #fafbfc !important;
+}
+
+.expired-row td {
+    opacity: 0.75;
+}
+
+.expired-row:hover {
+    background-color: #f3f5f8 !important;
+}
+
+/* 日期徽标 */
+.date-display {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 0.5rem;
+    width: 64px;
+    text-align: center;
+    background-color: #fff;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    margin: 0 auto;
+}
+
+.date-display:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.date-display .date-main {
+    background: linear-gradient(120deg, var(--brand), var(--brand-dark));
+    color: #fff;
+    font-weight: 600;
+    width: 100%;
+    padding: 5px 0;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.date-display .month {
+    font-size: 0.78rem;
+}
+
+.date-display .day {
+    font-size: 0.78rem;
+}
+
+.date-display .year {
+    font-size: 0.7rem;
+    color: var(--muted);
+    background-color: #f3f5f8;
+    width: 100%;
+    padding: 2px 0;
+}
+
+.upcoming-row .date-main {
+    background: linear-gradient(120deg, var(--success), #1f7a44);
+}
+
+.expired-row .date-main {
+    background: #aeb6bf;
+}
+
+/* 讲解人单元格 */
+.table td.presenter-cell {
+    min-width: 90px;
+    width: 120px;
+    white-space: nowrap;
+    padding-left: 14px;
+}
+
+.presenter-name {
+    font-weight: 600;
+}
+
+.grade-tag {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.08rem 0.4rem;
+    border-radius: 1rem;
+    vertical-align: middle;
+}
+
+.grade-tag {
+    background-color: rgba(44, 109, 208, 0.12);
+    color: var(--brand-dark);
+}
+
+/* 标题单元格 */
+.table td.title-cell {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 500;
+}
+
+.title-placeholder {
+    display: inline-block;
+    color: var(--muted);
+    font-style: italic;
+    font-weight: 500;
+    padding: 0.05rem 0.5rem;
+    border: 1px dashed #c7cfda;
+    border-radius: 1rem;
+    font-size: 0.82rem;
+}
+
+/* 状态徽标做成 pill */
+.table .badge {
+    font-weight: 600;
+    padding: 0.32em 0.6em;
+    border-radius: 1rem;
+}
+
+/* 操作按钮 */
+.table td.action-cell {
+    white-space: nowrap;
+    padding: 0.5rem;
+}
+
+.table td.action-cell .btn-sm {
+    font-size: 0.72rem;
+    padding: 0.18rem 0.55rem;
+    line-height: 1.3;
+}
+
+.expired-row .presenter-name {
+    font-weight: 500;
+}
+
+/* 控制栏 / 图例 */
+#toggle-expired {
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+#toggle-expired:hover {
+    transform: translateY(-1px);
+}
+
+.legend {
+    font-size: 0.82rem;
+}
+
+.legend .badge {
+    border-radius: 1rem;
+    font-weight: 600;
+}
+
+/* 报销安排 */
+.reimbursement-year {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--muted);
+}
+
+.quarter-card {
+    min-height: 150px;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    padding: 1rem;
+    background-color: #fff;
+    box-shadow: var(--shadow-sm);
+}
+
+.quarter-card.current-quarter {
+    border-color: rgba(46, 158, 91, 0.35);
+    box-shadow: inset 3px 0 0 var(--success), var(--shadow-sm);
+}
+
+.quarter-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    height: 32px;
+    border-radius: 1rem;
+    background-color: var(--brand-soft);
+    color: var(--brand-dark);
+    font-weight: 700;
+}
+
+.quarter-range {
+    margin-top: 0.8rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.quarter-owner {
+    margin-top: 0.8rem;
+}
+
+.quarter-owner span,
+.quarter-owner strong {
+    display: block;
+}
+
+.quarter-owner strong {
+    margin-top: 0.2rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.reimbursement-section {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+.reimbursement-section h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.reimbursement-form {
+    padding: 1rem;
+    background-color: #fafbfc;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+}
+
+.reimbursement-items-table td {
+    word-break: break-word;
+}
+
+/* 页脚 */
+footer.bg-light {
+    background-color: #fff !important;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.75rem;
+    }
+
+    .card-header > div {
+        width: 100%;
+    }
+
+    .table td.action-cell .btn-sm {
+        font-size: 0.66rem;
+        padding: 0.12rem 0.35rem;
+    }
+}

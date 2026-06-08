@@ -46,5 +46,6 @@ logs/
 .DS_Store
 Thumbs.db 
 
-# 数据目录
-data/
+# 实例数据目录（数据库、本地 .env），保留 .env.example
+instance/*
+!instance/.env.example

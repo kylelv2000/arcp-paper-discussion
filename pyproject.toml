@@ -1,0 +1,18 @@
+[project]
+name = "arcp-paper-discussion"
+version = "0.1.0"
+description = "ARCP Paper Discussion Schedule & Notification System"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "Flask>=2.3.3",
+    "Flask-SQLAlchemy>=3.1.1",
+    "Flask-Login>=0.6.2",
+    "Flask-WTF>=1.2.1",
+    "email-validator>=2.0.0",
+    "Flask-Mail>=0.9.1",
+    "APScheduler>=3.10.4",
+    "python-dotenv>=1.0.0",
+    "Werkzeug>=2.3.7",
+    "waitress>=3.0.0",
+]

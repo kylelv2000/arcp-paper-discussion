@@ -6,7 +6,13 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h2>论文讲解安排表</h2>
-        <a href="{{ url_for('add_paper') }}" class="btn btn-primary">添加安排</a>
+        {% if current_user.is_authenticated and current_user.is_admin %}
+        <div>
+            <a href="{{ url_for('main.add_paper') }}" class="btn btn-primary">添加安排</a>
+            <a href="{{ url_for('admin.new_round') }}" class="btn btn-outline-primary"
+               onclick="return confirm('将按成员顺序为新一轮排定讲解日期，确定继续吗？')">安排新轮</a>
+        </div>
+        {% endif %}
     </div>
     <div class="card-body">
         {% if papers %}
@@ -18,10 +24,13 @@
                         <span class="badge bg-secondary ms-1" id="expired-count">0</span>
                     </button>
                     
+                    {% if current_user.is_authenticated and current_user.is_admin %}
                     <div class="btn-group ms-2">
-                        <a href="/papers/shift/forward" class="btn btn-sm btn-outline-primary" onclick="return confirm('确定要将所有未过期安排顺延一周吗？')">顺延一周</a>
-                        <a href="/papers/shift/backward" class="btn btn-sm btn-outline-primary" onclick="return confirm('确定要将所有未过期安排提前一周吗？')">提前一周</a>
+                        <a href="{{ url_for('admin.shift_papers', direction='forward') }}" class="btn btn-sm btn-outline-primary" onclick="return confirm('确定要将所有未过期安排顺延一周吗？')">顺延一周</a>
+                        <a href="{{ url_for('admin.shift_papers', direction='backward') }}" class="btn btn-sm btn-outline-primary" onclick="return confirm('确定要将所有未过期安排提前一周吗？')">提前一周</a>
                     </div>
+                    {% endif %}
+
                 </div>
                 <div class="legend">
                     <span class="badge bg-success me-2">近期安排</span>
@@ -35,8 +44,9 @@
                         <th style="width: 90px;">时间</th>
                         <th style="width: 100px;">讲解人</th>
                         <th>论文标题</th>
-                        <th style="width: 85px;">状态</th>
-                        <th style="width: 140px;">操作</th>
+                        <th class="text-center" style="width: 120px;">PDF</th>
+                        <th class="text-center" style="width: 85px;">状态</th>
+                        <th class="text-center" style="width: 140px;">操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -55,9 +65,28 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="presenter-cell">{{ paper.presenter }}</td>
-                        <td class="title-cell">{{ paper.title }}</td>
-                        <td>
+                        <td class="presenter-cell">
+                            {% set grade_label = presenter_grade.get(paper.presenter) %}
+                            <span class="presenter-name">{{ paper.presenter }}</span>
+                            {% if grade_label %}
+                            <span class="grade-tag">{{ grade_label }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="title-cell">
+                            {% if not paper.title or paper.title == '待定' %}
+                            <span class="title-placeholder">待定</span>
+                            {% else %}
+                            {{ paper.title }}
+                            {% endif %}
+                        </td>
+                        <td class="action-cell text-center">
+                            {% if paper.has_pdf %}
+                            <a href="{{ url_for('main.download_paper_pdf', id=paper.id) }}" class="btn btn-sm btn-outline-primary">下载</a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
                             {% if is_expired %}
                                 <span class="badge bg-secondary">已过期</span>
                             {% elif is_upcoming %}
@@ -67,9 +96,12 @@
                             {% endif %}
                         </td>
                         <td class="action-cell text-center">
-                            <a href="{{ url_for('edit_paper', id=paper.id) }}" class="btn btn-sm btn-outline-primary me-1">编辑</a>
-                            <a href="{{ url_for('delete_paper', id=paper.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定要删除这条记录吗？')">删除</a>
+                            <a href="{{ url_for('main.edit_paper', id=paper.id) }}" class="btn btn-sm btn-outline-primary me-1">编辑</a>
+                            {% if current_user.is_authenticated and current_user.is_admin %}
+                            <a href="{{ url_for('admin.delete_paper', id=paper.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定要删除这条记录吗？')">删除</a>
+                            {% endif %}
                         </td>
+
                     </tr>
                     {% endfor %}
                 </tbody>
