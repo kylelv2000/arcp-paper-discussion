@@ -13,29 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     });
     
-    // 日期输入格式化（如果有日期输入框）
-    const dateInput = document.getElementById('date');
-    if (dateInput) {
-        dateInput.addEventListener('blur', function() {
-            const val = this.value.trim();
-            // 简单的日期格式验证和格式化
-            if (val && !/^\d{4}\/\d{2}\/\d{2}$/.test(val)) {
-                // 尝试将其他格式转换为YYYY/MM/DD
-                try {
-                    const date = new Date(val);
-                    if (!isNaN(date.getTime())) {
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        this.value = `${year}/${month}/${day}`;
-                    }
-                } catch (e) {
-                    console.error('日期格式化失败', e);
-                }
-            }
-        });
-    }
-    
     // 初始化过期论文折叠功能
     initExpiredRowsToggle();
 });
