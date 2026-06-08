@@ -4,6 +4,8 @@ from flask import render_template
 from arcp.extensions import db
 from arcp.models import Member, MeetingConfig, Paper, WEEKDAY_LABELS
 
+SITE_URL = 'https://arcp.kylelv.com'
+
 # 安排新轮时，新建论文的占位标题
 PLACEHOLDER_TITLE = '待定'
 
@@ -136,8 +138,13 @@ def build_notification_content(paper, future_papers):
         for item in upcoming:
             lines.append(f"  {item['date']}（{item['weekday']}） - {item['presenter']} - {item['title']}")
         lines.append('')
-    lines.append('请访问讨论班网站查看和编辑具体安排。')
+    lines.append(f'请访问讨论班网站查看和编辑具体安排：{SITE_URL}')
     text_body = '\n'.join(lines)
 
-    html_body = render_template('email/notification.html', main=main, upcoming=upcoming)
+    html_body = render_template(
+        'email/notification.html',
+        main=main,
+        upcoming=upcoming,
+        site_url=SITE_URL,
+    )
     return subject, text_body, html_body
