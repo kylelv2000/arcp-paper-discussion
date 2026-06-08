@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import current_user
 from arcp.extensions import db
 from arcp.models import Paper
-from arcp.services import ordered_members
+from arcp.services import ordered_members, next_open_meeting_date
 
 main_bp = Blueprint('main', __name__)
 
@@ -39,7 +39,7 @@ def add_paper():
         title = request.form['title']
         
         try:
-            date_obj = datetime.strptime(date_str, '%Y/%m/%d').date()
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
             new_paper = Paper(date=date_obj, presenter=presenter, title=title)
             db.session.add(new_paper)
             db.session.commit()
@@ -48,7 +48,12 @@ def add_paper():
         except Exception as e:
             flash(f'添加失败: {str(e)}', 'danger')
 
-    return render_template('paper_form.html', members=ordered_members())
+    # 默认日期：最近一个尚未排安排的开会日
+    return render_template(
+        'paper_form.html',
+        members=ordered_members(),
+        default_date=next_open_meeting_date().strftime('%Y-%m-%d'),
+    )
 
 @main_bp.route('/paper/edit/<int:id>', methods=['GET', 'POST'])
 def edit_paper(id):
@@ -57,7 +62,7 @@ def edit_paper(id):
     if request.method == 'POST':
         try:
             date_str = request.form['date']
-            paper.date = datetime.strptime(date_str, '%Y/%m/%d').date()
+            paper.date = datetime.strptime(date_str, '%Y-%m-%d').date()
             paper.presenter = request.form['presenter']
             paper.title = request.form['title']
             paper.updated_at = datetime.utcnow()

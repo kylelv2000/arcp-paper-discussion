@@ -53,6 +53,22 @@ def _next_meeting_after(d, weekday):
     return d + timedelta(days=days or 7)
 
 
+def next_open_meeting_date():
+    """返回最近一个尚未排安排的开会日，用于新建安排时的默认日期。
+
+    从今天起（含今天）找到最近的开会日，若该开会日已有安排则顺延一周，
+    直到找到空闲的开会日。
+    """
+    weekday = get_meeting_weekday()
+    today = date.today()
+    candidate = _next_meeting_on_or_after(today, weekday)
+
+    scheduled = {p.date for p in Paper.query.filter(Paper.date >= today).all()}
+    while candidate in scheduled:
+        candidate += timedelta(weeks=1)
+    return candidate
+
+
 def schedule_new_round():
     """将全体成员按顺序追加到时间表中，每周开会日各排一位。
 
