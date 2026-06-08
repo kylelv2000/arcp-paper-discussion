@@ -41,7 +41,7 @@ def start_app():
     print("==================================================")
     print("论文讲解安排系统")
     print("==================================================")
-    print("网站地址: http://localhost:5000")
+    print("网站地址: http://localhost:5001")
     print("管理员账号: admin")
     print("管理员密码: admin (首次登录请立即修改密码)")
     print("==================================================")
@@ -50,12 +50,13 @@ def start_app():
     
     # 打开浏览器
     sleep(1)
-    webbrowser.open('http://localhost:5000')
+    webbrowser.open('http://localhost:5001')
     
     # 启动Flask应用
     os.environ['FLASK_APP'] = 'app.py'
     os.environ['FLASK_ENV'] = 'development'
-    subprocess.call([sys.executable, "-m", "flask", "run", "--host=0.0.0.0"])
+    subprocess.call([sys.executable, "-m", "flask", "run", "--host=0.0.0.0", "--port=5001"])
+
 
 if __name__ == "__main__":
     print("正在启动论文讲解安排系统...")
