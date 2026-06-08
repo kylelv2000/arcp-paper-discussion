@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash
 from getpass import getpass
 from datetime import datetime
 from arcp.extensions import db
-from arcp.models import User, EmailConfig, Paper
+from arcp.models import User, EmailConfig, Paper, Member, MeetingConfig
 
 @click.command('db-init')
 @with_appcontext
@@ -21,8 +21,21 @@ def db_init():
         if not EmailConfig.query.first():
             default_config = EmailConfig()
             db.session.add(default_config)
-            
-        # 添加示例数据
+
+        # 创建默认每周开会日配置
+        if not MeetingConfig.query.first():
+            db.session.add(MeetingConfig())
+
+        # 添加示例成员（讲解人与邮箱绑定）
+        if not Member.query.first():
+            sample_members = [
+                Member(name='贾富琦', grade='phd', email=None, order_index=0),
+                Member(name='韩瑞', grade='master', email=None, order_index=1),
+            ]
+            for member in sample_members:
+                db.session.add(member)
+
+        # 添加示例安排
         sample_papers = [
             Paper(
                 date=datetime.strptime('2024/9/9', '%Y/%m/%d').date(),
@@ -37,7 +50,7 @@ def db_init():
         ]
         for paper in sample_papers:
             db.session.add(paper)
-            
+
         db.session.commit()
         print('数据库初始化完成!')
 

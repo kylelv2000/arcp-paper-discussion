@@ -6,6 +6,7 @@ from arcp.models import User
 from arcp.routes import main_bp, admin_bp
 from arcp.cli import register_cli_commands
 from arcp.scheduler import init_scheduler
+from arcp.bootstrap import ensure_database
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -30,8 +31,10 @@ def create_app(config_class=Config):
 
     # 避免在执行 CLI（如 db-init）时启动后台定时任务
     is_cli = len(sys.argv) > 1 and sys.argv[1] in ['db-init', 'change-password']
-    
+
     if not is_cli:
+        # 自动补齐新增表并迁移历史数据（成员、开会日配置）
+        ensure_database(app)
         with app.app_context():
             init_scheduler(app)
 

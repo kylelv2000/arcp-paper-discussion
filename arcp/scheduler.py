@@ -3,7 +3,8 @@ import atexit
 from flask_mail import Message
 from apscheduler.schedulers.background import BackgroundScheduler
 from arcp.extensions import db, mail
-from arcp.models import EmailConfig, EmailRecipient, Paper, SentNotification
+from arcp.models import EmailConfig, Paper, SentNotification
+from arcp.services import notification_emails
 
 def send_notification(app):
     """检查并发送邮件通知"""
@@ -42,8 +43,8 @@ def send_notification(app):
         if existing:
             return
         
-        # 获取收件人列表
-        recipients = [r.email for r in EmailRecipient.query.all()]
+        # 获取收件人列表（填写了邮箱的成员）
+        recipients = notification_emails()
         if not recipients:
             return
         

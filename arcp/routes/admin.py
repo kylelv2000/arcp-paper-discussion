@@ -3,7 +3,10 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_mail import Message
 from arcp.extensions import db, mail
-from arcp.models import User, Paper, EmailConfig, EmailRecipient
+from arcp.models import User, Paper, EmailConfig, Member
+from arcp.services import (
+    ordered_members, reset_member_order, next_order_index, notification_emails,
+)
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -76,9 +79,9 @@ def admin_dashboard():
         email_config = EmailConfig()
         db.session.add(email_config)
         db.session.commit()
-        
-    recipients = EmailRecipient.query.all()
-    return render_template('admin_dashboard.html', email_config=email_config, recipients=recipients)
+
+    members = ordered_members()
+    return render_template('admin_dashboard.html', email_config=email_config, members=members)
 
 @admin_bp.route('/admin/email_config', methods=['POST'])
 @login_required
@@ -100,33 +103,96 @@ def update_email_config():
     flash('邮件通知设置已更新，下次检查时生效', 'success')
     return redirect(url_for('admin.admin_dashboard'))
 
-@admin_bp.route('/admin/recipient/add', methods=['POST'])
+@admin_bp.route('/admin/member/add', methods=['POST'])
 @login_required
-def add_recipient():
+def add_member():
     if not current_user.is_admin:
         return jsonify({'status': 'error', 'message': '无权限'}), 403
-        
-    email = request.form['email']
-    if EmailRecipient.query.filter_by(email=email).first():
-        flash('该邮箱已存在', 'warning')
+
+    name = request.form.get('name', '').strip()
+    grade = request.form.get('grade', 'master')
+    email = request.form.get('email', '').strip() or None
+
+    if not name:
+        flash('成员姓名不能为空', 'warning')
         return redirect(url_for('admin.admin_dashboard'))
-        
-    new_recipient = EmailRecipient(email=email)
-    db.session.add(new_recipient)
+    if grade not in ('phd', 'master'):
+        grade = 'master'
+    if Member.query.filter_by(name=name).first():
+        flash('该成员已存在', 'warning')
+        return redirect(url_for('admin.admin_dashboard'))
+
+    member = Member(name=name, grade=grade, email=email, order_index=next_order_index())
+    db.session.add(member)
     db.session.commit()
-    flash('收件人已添加', 'success')
+    flash('成员已添加', 'success')
     return redirect(url_for('admin.admin_dashboard'))
 
-@admin_bp.route('/admin/recipient/delete/<int:id>')
+@admin_bp.route('/admin/member/edit/<int:id>', methods=['POST'])
 @login_required
-def delete_recipient(id):
+def edit_member(id):
     if not current_user.is_admin:
         return jsonify({'status': 'error', 'message': '无权限'}), 403
-        
-    recipient = EmailRecipient.query.get_or_404(id)
-    db.session.delete(recipient)
+
+    member = Member.query.get_or_404(id)
+    name = request.form.get('name', '').strip()
+    grade = request.form.get('grade', member.grade)
+    email = request.form.get('email', '').strip() or None
+
+    if not name:
+        flash('成员姓名不能为空', 'warning')
+        return redirect(url_for('admin.admin_dashboard'))
+    existing = Member.query.filter_by(name=name).first()
+    if existing and existing.id != member.id:
+        flash('已存在同名成员', 'warning')
+        return redirect(url_for('admin.admin_dashboard'))
+
+    member.name = name
+    member.grade = grade if grade in ('phd', 'master') else member.grade
+    member.email = email
     db.session.commit()
-    flash('收件人已删除', 'success')
+    flash('成员信息已更新', 'success')
+    return redirect(url_for('admin.admin_dashboard'))
+
+@admin_bp.route('/admin/member/delete/<int:id>')
+@login_required
+def delete_member(id):
+    if not current_user.is_admin:
+        return jsonify({'status': 'error', 'message': '无权限'}), 403
+
+    member = Member.query.get_or_404(id)
+    db.session.delete(member)
+    db.session.commit()
+    flash('成员已删除', 'success')
+    return redirect(url_for('admin.admin_dashboard'))
+
+@admin_bp.route('/admin/member/move/<int:id>/<direction>')
+@login_required
+def move_member(id, direction):
+    if not current_user.is_admin:
+        return jsonify({'status': 'error', 'message': '无权限'}), 403
+
+    members = ordered_members()
+    index = next((i for i, m in enumerate(members) if m.id == id), None)
+    if index is None:
+        flash('成员不存在', 'warning')
+        return redirect(url_for('admin.admin_dashboard'))
+
+    swap = index - 1 if direction == 'up' else index + 1
+    if 0 <= swap < len(members):
+        a, b = members[index], members[swap]
+        a.order_index, b.order_index = b.order_index, a.order_index
+        db.session.commit()
+    return redirect(url_for('admin.admin_dashboard'))
+
+@admin_bp.route('/admin/member/reset_order')
+@login_required
+def reset_member_order_route():
+    if not current_user.is_admin:
+        return jsonify({'status': 'error', 'message': '无权限'}), 403
+
+    reset_member_order()
+    flash('已按年级（博士优先）与姓名重置排序', 'success')
     return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/admin/send_notification_now')
@@ -149,10 +215,10 @@ def send_notification_now():
     
     # 准备邮件内容
     subject = f"论文讲解提醒: {upcoming_paper.date.strftime('%Y/%m/%d')}"
-    recipients = [r.email for r in EmailRecipient.query.all()]
-    
+    recipients = notification_emails()
+
     if not recipients:
-        flash('没有收件人，请先添加收件人', 'warning')
+        flash('没有收件人，请先在成员管理中为成员填写邮箱', 'warning')
         return redirect(url_for('admin.admin_dashboard'))
     
     body = f"""
