@@ -3,6 +3,7 @@
 项目未使用 Alembic，新增的表通过 ``db.create_all()`` 自动补齐；
 对于历史部署，将已有讲解人/收件人迁移为成员，保证下拉与通知可用。
 """
+from sqlalchemy import text, inspect
 from arcp.extensions import db
 from arcp.models import Member, MeetingConfig, EmailRecipient, Paper
 
@@ -12,6 +13,9 @@ def ensure_database(app):
         # 仅创建缺失的表，不会改动已存在的表
         db.create_all()
 
+        # 为已存在的表补齐新增列（create_all 不会修改既有表）
+        _ensure_columns()
+
         # 确保存在每周开会日配置
         if not MeetingConfig.query.first():
             db.session.add(MeetingConfig())
@@ -20,6 +24,19 @@ def ensure_database(app):
         if not Member.query.first():
             _seed_members_from_history()
 
+        db.session.commit()
+
+
+def _ensure_columns():
+    """针对 SQLite 的轻量列迁移：缺失则 ALTER TABLE 补齐。"""
+    inspector = inspect(db.engine)
+    if 'member' not in inspector.get_table_names():
+        return
+    columns = {col['name'] for col in inspector.get_columns('member')}
+    if 'archived' not in columns:
+        db.session.execute(text(
+            'ALTER TABLE member ADD COLUMN archived BOOLEAN NOT NULL DEFAULT 0'
+        ))
         db.session.commit()
 
 

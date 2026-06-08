@@ -5,8 +5,8 @@ from flask_mail import Message
 from arcp.extensions import db, mail
 from arcp.models import User, Paper, EmailConfig, Member, MeetingConfig, WEEKDAY_LABELS
 from arcp.services import (
-    ordered_members, reset_member_order, next_order_index, notification_emails,
-    schedule_new_round,
+    ordered_members, archived_members, reset_member_order, next_order_index,
+    notification_emails, schedule_new_round,
 )
 
 admin_bp = Blueprint('admin', __name__)
@@ -88,10 +88,12 @@ def admin_dashboard():
         db.session.commit()
 
     members = ordered_members()
+    archived = archived_members()
     return render_template(
         'admin_dashboard.html',
         email_config=email_config,
         members=members,
+        archived_members=archived,
         meeting_config=meeting_config,
         weekday_labels=WEEKDAY_LABELS,
     )
@@ -227,6 +229,31 @@ def reset_member_order_route():
 
     reset_member_order()
     flash('已按年级（博士优先）与姓名重置排序', 'success')
+    return redirect(url_for('admin.admin_dashboard'))
+
+@admin_bp.route('/admin/member/archive/<int:id>')
+@login_required
+def archive_member(id):
+    if not current_user.is_admin:
+        return jsonify({'status': 'error', 'message': '无权限'}), 403
+
+    member = Member.query.get_or_404(id)
+    member.archived = True
+    db.session.commit()
+    flash(f'成员 {member.name} 已归档', 'success')
+    return redirect(url_for('admin.admin_dashboard'))
+
+@admin_bp.route('/admin/member/unarchive/<int:id>')
+@login_required
+def unarchive_member(id):
+    if not current_user.is_admin:
+        return jsonify({'status': 'error', 'message': '无权限'}), 403
+
+    member = Member.query.get_or_404(id)
+    member.archived = False
+    member.order_index = next_order_index()
+    db.session.commit()
+    flash(f'成员 {member.name} 已恢复为在册成员', 'success')
     return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/admin/send_notification_now')

@@ -8,8 +8,19 @@ PLACEHOLDER_TITLE = '待定'
 
 
 def ordered_members():
-    """按自定义排序值返回成员列表。"""
-    return Member.query.order_by(Member.order_index, Member.id).all()
+    """按自定义排序值返回在册（未归档）成员，用于下拉、排轮与展示。"""
+    return (Member.query
+            .filter_by(archived=False)
+            .order_by(Member.order_index, Member.id)
+            .all())
+
+
+def archived_members():
+    """返回已归档（毕业）成员，仅用于后台查看与恢复。"""
+    return (Member.query
+            .filter_by(archived=True)
+            .order_by(Member.name)
+            .all())
 
 
 def get_meeting_weekday():
@@ -18,8 +29,8 @@ def get_meeting_weekday():
 
 
 def reset_member_order():
-    """按"年级高低（博士先于硕士），相同年级按姓名字典序"重排成员。"""
-    members = Member.query.all()
+    """按"年级高低（博士先于硕士），相同年级按姓名字典序"重排在册成员。"""
+    members = Member.query.filter_by(archived=False).all()
     members.sort(key=lambda m: (m.grade_priority, m.name))
     for index, member in enumerate(members):
         member.order_index = index
@@ -69,5 +80,9 @@ def schedule_new_round():
 
 
 def notification_emails():
-    """通知收件人 = 填写了邮箱的成员。"""
-    return [m.email for m in Member.query.filter(Member.email.isnot(None), Member.email != '').all()]
+    """通知收件人 = 填写了邮箱的在册（未归档）成员。"""
+    return [m.email for m in Member.query.filter(
+        Member.archived == False,  # noqa: E712
+        Member.email.isnot(None),
+        Member.email != '',
+    ).all()]

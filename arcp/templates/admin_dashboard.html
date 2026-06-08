@@ -153,6 +153,8 @@
                                 <td>
                                     <button type="button" class="btn btn-sm btn-outline-primary"
                                             data-bs-toggle="modal" data-bs-target="#editMember{{ member.id }}">编辑</button>
+                                    <a href="{{ url_for('admin.archive_member', id=member.id) }}" class="btn btn-sm btn-outline-secondary"
+                                       onclick="return confirm('确定归档成员 {{ member.name }} 吗？归档后将不参与排轮与通知。')">归档</a>
                                     <a href="{{ url_for('admin.delete_member', id=member.id) }}" class="btn btn-sm btn-outline-danger"
                                        onclick="return confirm('确定删除成员 {{ member.name }} 吗？')">删除</a>
                                 </td>
@@ -204,6 +206,49 @@
         </div>
     </div>
 </div>
+
+{% if archived_members %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h2>已归档成员 <span class="badge bg-secondary">{{ archived_members|length }}</span></h2>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">已归档（毕业）成员不参与讲解人下拉、安排新轮与邮件通知，历史安排记录仍保留。</p>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>姓名</th>
+                                <th style="width: 90px;">年级</th>
+                                <th>邮箱</th>
+                                <th style="width: 160px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in archived_members %}
+                            <tr>
+                                <td>{{ member.name }}</td>
+                                <td>
+                                    <span class="badge {% if member.grade == 'phd' %}bg-primary{% else %}bg-info text-dark{% endif %}">{{ member.grade_label }}</span>
+                                </td>
+                                <td class="text-muted">{{ member.email or '—' }}</td>
+                                <td>
+                                    <a href="{{ url_for('admin.unarchive_member', id=member.id) }}" class="btn btn-sm btn-outline-success">恢复</a>
+                                    <a href="{{ url_for('admin.delete_member', id=member.id) }}" class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('确定彻底删除成员 {{ member.name }} 吗？')">删除</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <div class="row mt-4">
     <div class="col-12">

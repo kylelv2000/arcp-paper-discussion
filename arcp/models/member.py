@@ -14,6 +14,8 @@ class Member(db.Model):
     email = db.Column(db.String(120))
     # 自定义排序值，安排新轮与后台展示均按此升序
     order_index = db.Column(db.Integer, nullable=False, default=0)
+    # 归档标记：已毕业成员归档后不参与下拉、排轮与通知，但保留历史记录
+    archived = db.Column(db.Boolean, nullable=False, default=False)
 
     @property
     def grade_label(self):
