@@ -9,7 +9,7 @@ from flask import (
 from flask_login import current_user
 from arcp.extensions import db
 from arcp.models import Member, Paper, ReimbursementAssignment, ReimbursementItem
-from arcp.services import ordered_members, next_open_meeting_date
+from arcp.services import ordered_members, schedulable_members, next_open_meeting_date
 
 main_bp = Blueprint('main', __name__)
 PDF_MIMETYPES = {'application/pdf', 'application/x-pdf'}
@@ -142,7 +142,7 @@ def index():
     papers = Paper.query.order_by(Paper.date).all()
 
     # 讲解人 -> 年级标签，用于在安排表中展示
-    presenter_grade = {m.name: m.grade_label for m in ordered_members()}
+    presenter_grade = {m.name: m for m in ordered_members()}
 
     return render_template(
         'index.html', papers=papers, today=today,
@@ -291,7 +291,7 @@ def add_paper():
     # 默认日期：最近一个尚未排安排的开会日
     return render_template(
         'paper_form.html',
-        members=ordered_members(),
+        members=schedulable_members(),
         default_date=next_open_meeting_date().strftime('%Y-%m-%d'),
     )
 
@@ -320,7 +320,7 @@ def edit_paper(id):
             db.session.rollback()
             flash(f'更新失败: {str(e)}', 'danger')
 
-    return render_template('paper_form.html', paper=paper, members=ordered_members())
+    return render_template('paper_form.html', paper=paper, members=schedulable_members())
 
 
 @main_bp.route('/paper/<int:id>/pdf')

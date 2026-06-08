@@ -6,7 +6,7 @@ from flask_mail import Message
 from arcp.extensions import db, mail
 from arcp.models import (
     User, Paper, EmailConfig, Member, MeetingConfig, ReimbursementAssignment,
-    WEEKDAY_LABELS, GRADE_CHOICES, GRADE_MIN, GRADE_MAX,
+    WEEKDAY_LABELS, GRADE_CHOICES, GRADE_MIN, GRADE_MAX, GRADE_OTHER,
 )
 from arcp.services import (
     ordered_members, archived_members, reset_member_order, next_order_index,
@@ -22,7 +22,7 @@ def _parse_grade(raw, fallback):
         value = int(raw)
     except (TypeError, ValueError):
         return fallback
-    return value if GRADE_MIN <= value <= GRADE_MAX else fallback
+    return value if value == GRADE_OTHER or GRADE_MIN <= value <= GRADE_MAX else fallback
 
 @admin_bp.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -221,7 +221,14 @@ def add_member():
         flash('该成员已存在', 'warning')
         return redirect(url_for('admin.admin_dashboard'))
 
-    member = Member(name=name, grade=grade, email=email, order_index=next_order_index())
+    update_year = datetime.now().year if datetime.now().month == 8 and grade != GRADE_OTHER else None
+    member = Member(
+        name=name,
+        grade=grade,
+        email=email,
+        order_index=next_order_index(),
+        last_grade_update_year=update_year,
+    )
     db.session.add(member)
     db.session.commit()
     flash('成员已添加', 'success')
