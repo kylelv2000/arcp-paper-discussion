@@ -6,11 +6,13 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h2>论文讲解安排表</h2>
+        {% if current_user.is_authenticated and current_user.is_admin %}
         <div>
             <a href="{{ url_for('main.add_paper') }}" class="btn btn-primary">添加安排</a>
             <a href="{{ url_for('admin.new_round') }}" class="btn btn-outline-primary"
                onclick="return confirm('将按成员顺序为新一轮排定讲解日期，确定继续吗？')">安排新轮</a>
         </div>
+        {% endif %}
     </div>
     <div class="card-body">
         {% if papers %}
@@ -22,10 +24,12 @@
                         <span class="badge bg-secondary ms-1" id="expired-count">0</span>
                     </button>
                     
+                    {% if current_user.is_authenticated and current_user.is_admin %}
                     <div class="btn-group ms-2">
                         <a href="{{ url_for('admin.shift_papers', direction='forward') }}" class="btn btn-sm btn-outline-primary" onclick="return confirm('确定要将所有未过期安排顺延一周吗？')">顺延一周</a>
                         <a href="{{ url_for('admin.shift_papers', direction='backward') }}" class="btn btn-sm btn-outline-primary" onclick="return confirm('确定要将所有未过期安排提前一周吗？')">提前一周</a>
                     </div>
+                    {% endif %}
 
                 </div>
                 <div class="legend">
@@ -73,7 +77,9 @@
                         </td>
                         <td class="action-cell text-center">
                             <a href="{{ url_for('main.edit_paper', id=paper.id) }}" class="btn btn-sm btn-outline-primary me-1">编辑</a>
+                            {% if current_user.is_authenticated and current_user.is_admin %}
                             <a href="{{ url_for('admin.delete_paper', id=paper.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定要删除这条记录吗？')">删除</a>
+                            {% endif %}
                         </td>
 
                     </tr>

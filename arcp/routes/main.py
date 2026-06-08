@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask_login import current_user
 from arcp.extensions import db
 from arcp.models import Paper
 from arcp.services import ordered_members
@@ -18,6 +19,11 @@ def index():
 
 @main_bp.route('/paper/add', methods=['GET', 'POST'])
 def add_paper():
+    # 仅管理员可新建安排；普通用户只能查看与修改
+    if not current_user.is_authenticated or not current_user.is_admin:
+        flash('无权限新建安排，请联系管理员', 'danger')
+        return redirect(url_for('main.index'))
+
     if request.method == 'POST':
         date_str = request.form['date']
         presenter = request.form['presenter']
