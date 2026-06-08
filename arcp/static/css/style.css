@@ -402,6 +402,28 @@ body {
     border-radius: 0.65rem;
 }
 
+.reimbursement-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.reimbursement-form-title {
+    font-weight: 700;
+}
+
+.reimbursement-confirmation {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
 .reimbursement-items-table td {
     word-break: break-word;
 }
@@ -428,5 +450,9 @@ footer.bg-light {
     .table td.action-cell .btn-sm {
         font-size: 0.66rem;
         padding: 0.12rem 0.35rem;
+    }
+
+    .reimbursement-form-header {
+        flex-direction: column;
     }
 }

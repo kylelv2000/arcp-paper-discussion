@@ -44,11 +44,7 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h3>{{ quarter.label }} 报销事项</h3>
                 {% if quarter.is_current %}
-                <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-primary copy-reimbursement-btn"
-                            data-target="reimbursementExport{{ quarter.number }}">复制当前季度报销信息</button>
-                    <span class="badge bg-success">可添加和修改</span>
-                </div>
+                <span class="badge bg-success">可添加</span>
                 {% else %}
                 <span class="badge bg-light text-dark border">仅查看</span>
                 {% endif %}
@@ -56,7 +52,16 @@
 
             {% if quarter.is_current %}
             <textarea id="reimbursementExport{{ quarter.number }}" class="visually-hidden">{{ quarter.export_text }}</textarea>
-            <form method="post" action="{{ url_for('main.add_reimbursement_item') }}" class="row g-3 align-items-end reimbursement-form">
+            <form method="post" action="{{ url_for('main.add_reimbursement_item') }}" class="reimbursement-form">
+                <div class="reimbursement-form-header">
+                    <div>
+                        <div class="reimbursement-form-title">添加当前季度报销</div>
+                        <div class="text-muted small">同一用户当前季度只能提交一条；材料请私下给负责人。</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary copy-reimbursement-btn"
+                            data-target="reimbursementExport{{ quarter.number }}">复制当前季度报销信息</button>
+                </div>
+                <div class="row g-3 align-items-start">
                 <div class="col-md-3">
                     <label class="form-label">用户</label>
                     <select class="form-select" name="member_name" required>
@@ -66,24 +71,24 @@
                         {% endfor %}
                     </select>
                 </div>
+                <div class="col-md-2">
+                    <label class="form-label">报销金额</label>
+                    <input type="number" class="form-control" name="amount" min="0.01" max="10000" step="0.01" placeholder="0.00" required>
+                </div>
                 <div class="col-md-7">
-                    <label class="form-label">报销内容</label>
+                    <label class="form-label">报销内容及用途</label>
                     <input type="text" class="form-control" name="content" maxlength="500"
-                           placeholder="写清楚报销金额、用途，最多 50 词" required>
-                    <div class="form-text">请写清楚报销金额、用途。材料请私下传递，网站只统计信息。</div>
+                           placeholder="例如：用于 ISSTA 实验，最多 200 词" required>
                 </div>
                 <div class="col-md-10">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="materials_complete" name="materials_complete" value="1" required>
-                        <label class="form-check-label" for="materials_complete">确认发票、付款记录、账单流水齐全或已核对清楚</label>
-                    </div>
-                    <div class="form-check mt-2">
-                        <input class="form-check-input" type="checkbox" id="teacher_acknowledged" name="teacher_acknowledged" value="1" required>
-                        <label class="form-check-label" for="teacher_acknowledged">确认该信息会给到相关老师审批</label>
-                    </div>
+                    <label class="reimbursement-confirmation">
+                        <input class="form-check-input" type="checkbox" name="reimbursement_confirmed" value="1" required>
+                        <span>我确认已将发票、付款记录、账单流水等材料给到负责人；该信息会交给相关老师审批。</span>
+                    </label>
                 </div>
                 <div class="col-md-2 d-grid">
                     <button type="submit" class="btn btn-primary">添加</button>
+                </div>
                 </div>
             </form>
             {% endif %}
@@ -94,11 +99,12 @@
                     <thead>
                         <tr>
                             <th style="width: 120px;">用户</th>
-                            <th>报销内容</th>
+                            <th class="text-center" style="width: 120px;">金额</th>
+                            <th>报销内容及用途</th>
                             <th class="text-center" style="width: 150px;">材料状态</th>
                             <th class="text-center" style="width: 160px;">更新时间</th>
                             {% if quarter.is_current %}
-                            <th class="text-center" style="width: 150px;">操作</th>
+                            <th class="text-center" style="width: 90px;">操作</th>
                             {% endif %}
                         </tr>
                     </thead>
@@ -106,6 +112,7 @@
                         {% for item in quarter.reimbursement_items %}
                         <tr>
                             <td class="fw-semibold">{{ item.member_name }}</td>
+                            <td class="text-center fw-semibold">{{ "%g"|format(item.amount) }}</td>
                             <td>{{ item.content }}</td>
                             <td class="text-center">
                                 {% if item.materials_complete %}
@@ -117,8 +124,6 @@
                             <td class="text-muted text-center">{{ item.updated_at.strftime('%Y-%m-%d') }}</td>
                             {% if quarter.is_current %}
                             <td class="text-nowrap action-cell text-center">
-                                <button type="button" class="btn btn-sm btn-outline-primary me-1"
-                                        data-bs-toggle="modal" data-bs-target="#editReimbursement{{ item.id }}">修改</button>
                                 <form method="post" action="{{ url_for('main.delete_reimbursement_item', id=item.id) }}" class="d-inline"
                                       onsubmit="return confirm('确定删除 {{ item.member_name }} 的报销事项吗？')">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
@@ -134,46 +139,6 @@
             <div class="alert alert-info mb-0 mt-3">当前没有报销事项。</div>
             {% endif %}
         </div>
-        {% endfor %}
-
-        {% for quarter in quarters if quarter.is_current %}
-            {% for item in quarter.reimbursement_items %}
-            <div class="modal fade" id="editReimbursement{{ item.id }}" tabindex="-1">
-                <div class="modal-dialog">
-                    <form method="post" action="{{ url_for('main.edit_reimbursement_item', id=item.id) }}" class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">修改报销事项</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">用户</label>
-                                <input type="text" class="form-control" value="{{ item.member_name }}" disabled>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">报销内容</label>
-                                <input type="text" class="form-control" name="content" value="{{ item.content }}" maxlength="500" required>
-                                <div class="form-text">请写清楚报销金额、用途，最多 50 词。</div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="materialsComplete{{ item.id }}" name="materials_complete" value="1" required {% if item.materials_complete %}checked{% endif %}>
-                                    <label class="form-check-label" for="materialsComplete{{ item.id }}">确认发票、付款记录、账单流水齐全或已核对清楚</label>
-                                </div>
-                                <div class="form-check mt-2">
-                                    <input class="form-check-input" type="checkbox" id="teacherAcknowledged{{ item.id }}" name="teacher_acknowledged" value="1" required {% if item.teacher_acknowledged %}checked{% endif %}>
-                                    <label class="form-check-label" for="teacherAcknowledged{{ item.id }}">确认该信息会给到相关老师审批</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                            <button type="submit" class="btn btn-primary">保存</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            {% endfor %}
         {% endfor %}
     </div>
 </div>

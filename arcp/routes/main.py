@@ -83,10 +83,22 @@ def _save_paper_pdf(paper, file):
 def _validate_reimbursement_content(content):
     value = (content or '').strip()
     if not value:
-        raise ValueError('报销内容不能为空')
-    if len(value.split()) > 50:
-        raise ValueError('报销内容最多 50 词')
+        raise ValueError('报销内容及用途不能为空')
+    if len(value.split()) > 200:
+        raise ValueError('报销内容及用途最多 200 词')
     return value
+
+
+def _validate_reimbursement_amount(amount):
+    try:
+        value = float((amount or '').strip())
+    except (TypeError, ValueError):
+        raise ValueError('报销金额必须是正数字')
+    if value <= 0:
+        raise ValueError('报销金额必须大于 0')
+    if value > 10000:
+        raise ValueError('报销金额不能超过 10000')
+    return round(value, 2)
 
 
 def _validate_member_name(member_name):
@@ -99,10 +111,8 @@ def _validate_member_name(member_name):
 
 
 def _validate_reimbursement_confirmations(form):
-    if form.get('materials_complete') != '1':
-        raise ValueError('请确认发票、付款记录、账单流水是否齐全')
-    if form.get('teacher_acknowledged') != '1':
-        raise ValueError('请确认该信息会给到相关老师审批')
+    if form.get('reimbursement_confirmed') != '1':
+        raise ValueError('请确认材料与审批提示')
 
 
 def _require_current_reimbursement_period(year, quarter):
@@ -112,25 +122,15 @@ def _require_current_reimbursement_period(year, quarter):
 
 
 def _build_reimbursement_export_text(year, quarter, owner, items):
-    lines = [
-        f'{year} Q{quarter} 报销信息',
-        f'负责人：{owner or "待安排"}',
-        f'报销人数：{len(items)}',
-        '',
-    ]
+    lines = [f'{year} Q{quarter} 报销']
     if not items:
-        lines.append('当前季度暂无报销信息。')
+        lines.append('暂无报销信息。')
         return '\n'.join(lines)
 
     for index, item in enumerate(items, start=1):
-        lines.extend([
-            f'{index}. {item.member_name}',
-            f'报销信息：{item.content}',
-            f'发票+付款记录+账单流水是否齐全：{"是" if item.materials_complete else "未确认"}',
-            '说明：该信息将给到相关老师审批。',
-            '',
-        ])
-    return '\n'.join(lines).rstrip()
+        amount = f'{item.amount:g}'
+        lines.append(f'{index}. {item.member_name}：金额{amount}，{item.content}')
+    return '\n'.join(lines)
 
 
 @main_bp.route('/')
@@ -201,6 +201,7 @@ def add_reimbursement_item():
     current_year, current_quarter = _current_year_quarter()
     try:
         member_name = _validate_member_name(request.form.get('member_name'))
+        amount = _validate_reimbursement_amount(request.form.get('amount'))
         content = _validate_reimbursement_content(request.form.get('content'))
         existing = ReimbursementItem.query.filter_by(
             year=current_year,
@@ -215,6 +216,7 @@ def add_reimbursement_item():
             year=current_year,
             quarter=current_quarter,
             member_name=member_name,
+            amount=amount,
             content=content,
             materials_complete=True,
             teacher_acknowledged=True,
@@ -236,6 +238,7 @@ def edit_reimbursement_item(id):
     item = ReimbursementItem.query.get_or_404(id)
     try:
         _require_current_reimbursement_period(item.year, item.quarter)
+        item.amount = _validate_reimbursement_amount(request.form.get('amount'))
         item.content = _validate_reimbursement_content(request.form.get('content'))
         _validate_reimbursement_confirmations(request.form)
         item.materials_complete = True

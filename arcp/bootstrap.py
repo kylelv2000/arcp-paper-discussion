@@ -68,6 +68,10 @@ def _ensure_columns(app):
 
     if 'reimbursement_item' in tables:
         item_columns = {col['name'] for col in inspector.get_columns('reimbursement_item')}
+        if 'amount' not in item_columns:
+            db.session.execute(text(
+                'ALTER TABLE reimbursement_item ADD COLUMN amount FLOAT NOT NULL DEFAULT 0'
+            ))
         if 'materials_complete' not in item_columns:
             db.session.execute(text(
                 'ALTER TABLE reimbursement_item ADD COLUMN materials_complete BOOLEAN NOT NULL DEFAULT 0'
