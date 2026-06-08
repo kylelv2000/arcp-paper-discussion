@@ -39,15 +39,22 @@ def _ensure_columns():
         ))
         db.session.commit()
 
+    # 历史的字符串年级（phd/master）迁移为 1~8 的整数年级
+    db.session.execute(text("UPDATE member SET grade='5' WHERE grade='phd'"))
+    db.session.execute(text("UPDATE member SET grade='2' WHERE grade='master'"))
+    # 其余非 1~8 的非法值统一回落为 1 年级
+    db.session.execute(text("UPDATE member SET grade='1' WHERE grade NOT GLOB '[1-8]'"))
+    db.session.commit()
+
 
 def _seed_members_from_history():
     seen = set()
     order = 0
 
-    # 1) 已有讲解人 -> 成员（年级未知，默认硕士，邮箱留空待补全）
+    # 1) 已有讲解人 -> 成员（年级未知，默认 1 年级，邮箱留空待补全）
     for (name,) in db.session.query(Paper.presenter).distinct():
         if name and name not in seen:
-            db.session.add(Member(name=name, grade='master', email=None, order_index=order))
+            db.session.add(Member(name=name, grade=1, email=None, order_index=order))
             seen.add(name)
             order += 1
 
@@ -59,6 +66,6 @@ def _seed_members_from_history():
         while name in seen:
             suffix += 1
             name = f'{local}{suffix}'
-        db.session.add(Member(name=name, grade='master', email=recipient.email, order_index=order))
+        db.session.add(Member(name=name, grade=1, email=recipient.email, order_index=order))
         seen.add(name)
         order += 1

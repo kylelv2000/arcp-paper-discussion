@@ -30,7 +30,7 @@ def get_meeting_weekday():
 
 
 def reset_member_order():
-    """按"年级高低（博士先于硕士），相同年级按姓名字典序"重排在册成员。"""
+    """按"年级高低（高年级优先），相同年级按姓名字典序"重排在册成员。"""
     members = Member.query.filter_by(archived=False).all()
     members.sort(key=lambda m: (m.grade_priority, m.name))
     for index, member in enumerate(members):

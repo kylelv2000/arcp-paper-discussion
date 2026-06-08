@@ -100,7 +100,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h2>成员管理</h2>
                 <a href="{{ url_for('admin.reset_member_order_route') }}" class="btn btn-sm btn-outline-secondary"
-                   onclick="return confirm('确定按年级（博士优先）与姓名字典序重置排序吗？')">按年级重置排序</a>
+                   onclick="return confirm('确定按年级（高年级优先）与姓名字典序重置排序吗？')">按年级重置排序</a>
             </div>
             <div class="card-body">
                 <form method="post" action="{{ url_for('admin.add_member') }}" class="row g-2 align-items-end mb-4">
@@ -111,8 +111,9 @@
                     <div class="col-md-3">
                         <label class="form-label">年级</label>
                         <select class="form-select" name="grade">
-                            <option value="phd">博士</option>
-                            <option value="master" selected>硕士</option>
+                            {% for g in grade_choices %}
+                            <option value="{{ g }}">{{ g }}年级</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -147,7 +148,7 @@
                                 </td>
                                 <td>{{ member.name }}</td>
                                 <td>
-                                    <span class="badge {% if member.grade == 'phd' %}bg-primary{% else %}bg-info text-dark{% endif %}">{{ member.grade_label }}</span>
+                                    <span class="badge bg-light text-dark border">{{ member.grade_label }}</span>
                                 </td>
                                 <td class="text-muted">{{ member.email or '—' }}</td>
                                 <td class="text-nowrap">
@@ -180,8 +181,9 @@
                                 <div class="mb-3">
                                     <label class="form-label">年级</label>
                                     <select class="form-select" name="grade">
-                                        <option value="phd" {% if member.grade == 'phd' %}selected{% endif %}>博士</option>
-                                        <option value="master" {% if member.grade == 'master' %}selected{% endif %}>硕士</option>
+                                        {% for g in grade_choices %}
+                                        <option value="{{ g }}" {% if member.grade == g %}selected{% endif %}>{{ g }}年级</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                                 <div class="mb-3">
@@ -231,7 +233,7 @@
                             <tr>
                                 <td>{{ member.name }}</td>
                                 <td>
-                                    <span class="badge {% if member.grade == 'phd' %}bg-primary{% else %}bg-info text-dark{% endif %}">{{ member.grade_label }}</span>
+                                    <span class="badge bg-light text-dark border">{{ member.grade_label }}</span>
                                 </td>
                                 <td class="text-muted">{{ member.email or '—' }}</td>
                                 <td class="text-nowrap">

@@ -29,8 +29,8 @@ def db_init():
         # 添加示例成员（讲解人与邮箱绑定）
         if not Member.query.first():
             sample_members = [
-                Member(name='贾富琦', grade='phd', email=None, order_index=0),
-                Member(name='韩瑞', grade='master', email=None, order_index=1),
+                Member(name='贾富琦', grade=5, email=None, order_index=0),
+                Member(name='韩瑞', grade=2, email=None, order_index=1),
             ]
             for member in sample_members:
                 db.session.add(member)

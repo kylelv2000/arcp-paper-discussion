@@ -255,14 +255,9 @@ body {
     vertical-align: middle;
 }
 
-.grade-phd {
+.grade-tag {
     background-color: rgba(44, 109, 208, 0.12);
     color: var(--brand-dark);
-}
-
-.grade-master {
-    background-color: rgba(23, 162, 184, 0.14);
-    color: #117a8b;
 }
 
 /* 标题单元格 */

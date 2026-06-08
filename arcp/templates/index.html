@@ -65,10 +65,10 @@
                             </div>
                         </td>
                         <td class="presenter-cell">
-                            {% set grade = presenter_grade.get(paper.presenter) %}
+                            {% set grade_label = presenter_grade.get(paper.presenter) %}
                             <span class="presenter-name">{{ paper.presenter }}</span>
-                            {% if grade %}
-                            <span class="grade-tag grade-{{ grade.code }}">{{ grade.label }}</span>
+                            {% if grade_label %}
+                            <span class="grade-tag">{{ grade_label }}</span>
                             {% endif %}
                         </td>
                         <td class="title-cell">

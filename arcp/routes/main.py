@@ -15,11 +15,8 @@ def index():
     # 获取所有论文，统一按日期升序排列
     papers = Paper.query.order_by(Paper.date).all()
 
-    # 讲解人 -> 年级，用于在安排表中展示年级标签
-    presenter_grade = {
-        m.name: {'code': m.grade, 'label': m.grade_label}
-        for m in ordered_members()
-    }
+    # 讲解人 -> 年级标签，用于在安排表中展示
+    presenter_grade = {m.name: m.grade_label for m in ordered_members()}
 
     return render_template(
         'index.html', papers=papers, today=today,

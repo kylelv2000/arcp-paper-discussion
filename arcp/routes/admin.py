@@ -3,13 +3,22 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_mail import Message
 from arcp.extensions import db, mail
-from arcp.models import User, Paper, EmailConfig, Member, MeetingConfig, WEEKDAY_LABELS
+from arcp.models import User, Paper, EmailConfig, Member, MeetingConfig, WEEKDAY_LABELS, GRADE_CHOICES, GRADE_MIN, GRADE_MAX
 from arcp.services import (
     ordered_members, archived_members, reset_member_order, next_order_index,
     notification_emails, schedule_new_round, build_notification_content,
 )
 
 admin_bp = Blueprint('admin', __name__)
+
+
+def _parse_grade(raw, fallback):
+    """将表单年级解析为 1~8 的整数，非法时返回 fallback。"""
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return fallback
+    return value if GRADE_MIN <= value <= GRADE_MAX else fallback
 
 @admin_bp.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -96,6 +105,7 @@ def admin_dashboard():
         archived_members=archived,
         meeting_config=meeting_config,
         weekday_labels=WEEKDAY_LABELS,
+        grade_choices=GRADE_CHOICES,
     )
 
 @admin_bp.route('/admin/meeting_config', methods=['POST'])
@@ -146,14 +156,12 @@ def add_member():
         return jsonify({'status': 'error', 'message': '无权限'}), 403
 
     name = request.form.get('name', '').strip()
-    grade = request.form.get('grade', 'master')
+    grade = _parse_grade(request.form.get('grade'), GRADE_MIN)
     email = request.form.get('email', '').strip() or None
 
     if not name:
         flash('成员姓名不能为空', 'warning')
         return redirect(url_for('admin.admin_dashboard'))
-    if grade not in ('phd', 'master'):
-        grade = 'master'
     if Member.query.filter_by(name=name).first():
         flash('该成员已存在', 'warning')
         return redirect(url_for('admin.admin_dashboard'))
@@ -172,7 +180,7 @@ def edit_member(id):
 
     member = Member.query.get_or_404(id)
     name = request.form.get('name', '').strip()
-    grade = request.form.get('grade', member.grade)
+    grade = _parse_grade(request.form.get('grade'), member.grade)
     email = request.form.get('email', '').strip() or None
 
     if not name:
@@ -184,7 +192,7 @@ def edit_member(id):
         return redirect(url_for('admin.admin_dashboard'))
 
     member.name = name
-    member.grade = grade if grade in ('phd', 'master') else member.grade
+    member.grade = grade
     member.email = email
     db.session.commit()
     flash('成员信息已更新', 'success')
@@ -228,7 +236,7 @@ def reset_member_order_route():
         return jsonify({'status': 'error', 'message': '无权限'}), 403
 
     reset_member_order()
-    flash('已按年级（博士优先）与姓名重置排序', 'success')
+    flash('已按年级（高年级优先）与姓名重置排序', 'success')
     return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/admin/member/archive/<int:id>')
