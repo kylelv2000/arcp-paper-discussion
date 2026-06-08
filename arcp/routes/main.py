@@ -14,8 +14,17 @@ def index():
     
     # 获取所有论文，统一按日期升序排列
     papers = Paper.query.order_by(Paper.date).all()
-    
-    return render_template('index.html', papers=papers, today=today, current_year=current_year)
+
+    # 讲解人 -> 年级，用于在安排表中展示年级标签
+    presenter_grade = {
+        m.name: {'code': m.grade, 'label': m.grade_label}
+        for m in ordered_members()
+    }
+
+    return render_template(
+        'index.html', papers=papers, today=today,
+        current_year=current_year, presenter_grade=presenter_grade,
+    )
 
 @main_bp.route('/paper/add', methods=['GET', 'POST'])
 def add_paper():

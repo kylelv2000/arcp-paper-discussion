@@ -64,8 +64,20 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="presenter-cell">{{ paper.presenter }}</td>
-                        <td class="title-cell">{{ paper.title }}</td>
+                        <td class="presenter-cell">
+                            {% set grade = presenter_grade.get(paper.presenter) %}
+                            <span class="presenter-name">{{ paper.presenter }}</span>
+                            {% if grade %}
+                            <span class="grade-tag grade-{{ grade.code }}">{{ grade.label }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="title-cell">
+                            {% if paper.title == '待定' %}
+                            <span class="title-placeholder">待定</span>
+                            {% else %}
+                            {{ paper.title }}
+                            {% endif %}
+                        </td>
                         <td>
                             {% if is_expired %}
                                 <span class="badge bg-secondary">已过期</span>

@@ -29,6 +29,12 @@ def create_app(config_class=Config):
     def load_user(user_id):
         return User.query.get(int(user_id))
 
+    # 模板全局变量：当前年份（用于页脚等）
+    @app.context_processor
+    def inject_globals():
+        from datetime import datetime
+        return {'current_year_global': datetime.now().year}
+
     # 避免在执行 CLI（如 db-init）时启动后台定时任务
     is_cli = len(sys.argv) > 1 and sys.argv[1] in ['db-init', 'change-password']
 
